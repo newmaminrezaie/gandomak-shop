@@ -44,7 +44,7 @@ export default function FloatingCallButton() {
           type="button"
           onClick={dismiss}
           aria-label="بستن"
-          className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-card text-muted-foreground border border-border flex items-center justify-center shadow-soft hover:text-foreground transition-smooth"
+          className="absolute -top-1 -left-1 h-5 w-5 rounded-full bg-card text-muted-foreground border border-border flex items-center justify-center shadow-soft hover:text-foreground transition-smooth"
         >
           <X className="h-3 w-3" />
         </button>
