@@ -15,6 +15,12 @@ export default function PaymentCallback() {
   const { clear } = useCart();
 
   useEffect(() => {
+    const methodParam = params.get("method");
+    if (methodParam === "card") {
+      setRefId(params.get("refId") ?? params.get("orderId") ?? "");
+      setState("success");
+      return;
+    }
     const Authority = params.get("Authority");
     const Status = params.get("Status");
     if (!Authority || Status !== "OK") {
