@@ -1,60 +1,55 @@
-## Add Trust Seals Strip to Footer
+## Add "کارت‌به‌کارت" Payment Option at Checkout (Zibal placeholder for later)
 
-Add a new "trust seals" row above the copyright line in `src/components/Footer.tsx` containing the live Enamad seal plus three placeholder pill-shaped slots for future seals (eNamad badge, Emalls, Post-IR). All seals share a uniform "small square pill" style so the strip looks balanced even before the placeholders are wired up.
+Replace the single "Pay with Zarinpal" button in `src/pages/CartPage.tsx` with a two-option payment selector. Card-to-card is fully functional now; Zibal is wired as a stub that you'll point at real endpoints later.
 
-### What gets added
+### Frontend — `src/pages/CartPage.tsx`
 
-1. **Save uploaded assets** to `src/assets/trust/`:
-   - `src/assets/trust/enamad.jpg` ← copied from `user-uploads://EnamadLogo2.jpg` (used as the Enamad seal image, replacing the remote `trustseal.enamad.ir/logo.aspx` image so it always renders fast and isn't blocked by referrer rules)
-   - `src/assets/trust/emalls.svg` ← copied from `user-uploads://Emalls.svg` (placeholder slot image)
-   - `src/assets/trust/post-ir.png` ← copied from `user-uploads://Post-ir2.png` (placeholder slot image)
+1. **New state**: `const [method, setMethod] = useState<"card" | "zibal">("card");` (default to card-to-card so users see the card details immediately).
 
-2. **Footer.tsx — new "Trust seals" block** inserted between the contact grid (line 67 `</div>`) and the copyright `<div>` (line 69):
-   - A centered flex row, wraps on mobile, ~16px gap.
-   - Each item is a square white pill: `h-20 w-20 rounded-xl bg-background border border-border flex items-center justify-center p-2 hover:shadow-elegant transition-smooth`. Image inside uses `max-h-full max-w-full object-contain`.
-   - **Slot 1 — Enamad (live link):**
-     ```tsx
-     <a
-       referrerPolicy="origin"
-       target="_blank"
-       rel="noreferrer"
-       href="https://trustseal.enamad.ir/?id=655583&Code=i679RnaSXE7EUpN1xFeht0NynDKCAwub"
-       className="h-20 w-20 rounded-xl bg-background border border-border flex items-center justify-center p-2 hover:shadow-elegant transition-smooth"
-     >
-       <img
-         src={enamadSeal}
-         alt="نماد اعتماد الکترونیکی"
-         referrerPolicy="origin"
-         data-enamad-code="i679RnaSXE7EUpN1xFeht0NynDKCAwub"
-         className="max-h-full max-w-full object-contain"
-       />
-     </a>
-     ```
-     Note: the snippet you pasted relies on `code="..."` which Enamad's verifier reads on click; we keep the same value via `data-enamad-code` (valid HTML) and preserve `referrerPolicy="origin"` on both the anchor and the image so the verifier still recognizes the seal.
-   - **Slots 2–4 — Placeholders (no link yet):** same pill styling but rendered as a `<div>` with `aria-label` (e.g. "ای‌مالز", "پست جمهوری اسلامی ایران", and one extra empty placeholder reserved for a future seal). Image source uses the saved Emalls / Post-IR assets; the third placeholder uses a neutral `bg-muted` empty pill with a small `…` so the row keeps its rhythm.
+2. **Payment method picker** (above the submit button, below the customer fields):
+   - Two equal radio-style pills using existing tokens (`bg-background`, `border-border`, selected = `border-primary bg-primary/5 ring-2 ring-primary/30`).
+   - Labels: **"کارت‌به‌کارت"** and **"درگاه زیبال"**.
 
-3. **Section heading** above the row (small, muted): `<div className="text-xs text-muted-foreground text-center mb-3">نمادهای اعتماد</div>` so the strip reads as a labelled trust band.
+3. **Card-to-card panel** (shown when `method === "card"`):
+   - Card holder: **سمیرا رشیدی**
+   - Card number displayed in 4-group `fa-num` format: **۶۰۶۳ ۷۳۱۰ ۵۵۸۰ ۵۷۶۷** (stored as the raw `6063731055805767`).
+   - "کپی شماره کارت" button → `navigator.clipboard.writeText("6063731055805767")` + `toast.success("شماره کارت کپی شد")`.
+   - Short instructions (Persian): pay the order total to this card, then enter the 4-digit reference and (optional) timestamp below.
+   - Two extra inputs added to `form` state: `cardRef` (required for card method) and `paidAt` (optional Persian date/time text).
 
-### Layout sketch
+4. **Zibal panel** (shown when `method === "zibal"`):
+   - Single-line note: «در حال حاضر در حال اتصال به درگاه زیبال هستیم — به‌زودی فعال می‌شود.» Submit stays disabled with a lighter style, OR if you prefer it always submits, we keep it enabled and the backend returns the placeholder error. **Decision in plan: keep button enabled but show a `toast.info` saying the gateway will be wired up once endpoints arrive — no network call is made.**
 
-```text
-─────────────────────────────────────────────
-            نمادهای اعتماد
-   ┌────┐  ┌────┐  ┌────┐  ┌────┐
-   │ENMD│  │EMAL│  │POST│  │ …  │
-   └────┘  └────┘  └────┘  └────┘
-─────────────────────────────────────────────
-        © ۱۴۰۴ گندمک شاپ — …
-```
+5. **Submit logic** (`handleSubmit`):
+   - Validation: name/phone/address required for both. For `card`, also require `form.cardRef` (min 4 chars).
+   - For `card`: POST to **`/api/order`** with `{ customer, items, paymentMethod: "card", cardRef, paidAt }`. On success the backend now returns `{ orderId, refId }` instead of a `paymentUrl`. We `clear()` the cart and `navigate('/payment/callback?method=card&orderId=…')` so the existing success page is reused.
+   - For `zibal`: short-circuit — `toast.info("درگاه زیبال هنوز فعال نیست. لطفاً از کارت‌به‌کارت استفاده کنید.")` and do not call the backend.
+
+6. **Submit button label**:
+   - card → **"ثبت سفارش (کارت‌به‌کارت)"**
+   - zibal → **"پرداخت با زیبال (به‌زودی)"** (disabled visual)
+
+7. **Trust footer line** under the button updates per method: card → "ثبت سفارش پس از واریز و ارسال کد پیگیری"، zibal → "اتصال به درگاه زیبال در حال آماده‌سازی".
+
+### Backend — `server/index.js`
+
+1. Extend `POST /api/order` to branch on `paymentMethod`:
+   - **`paymentMethod === "card"`**: skip Zarinpal entirely. Compute the same server-side `total` (existing logic), persist a new order with `status: "awaiting_review"`, `paymentMethod: "card"`, `cardRef`, `paidAt`, then return `{ ok: true, orderId, refId: <short id> }` (no `paymentUrl`).
+   - **`paymentMethod === "zibal"`**: return `{ error: "zibal_not_configured" }` with HTTP 501 for now — placeholder until you provide endpoints. (Frontend never calls this branch yet, but keeps the contract honest.)
+   - Default / missing → keep existing Zarinpal flow untouched so nothing else regresses.
+2. Add the bank card constants near the top so they're easy to update later:
+   ```js
+   const CARD_NUMBER = "6063731055805767";
+   const CARD_HOLDER = "سمیرا رشیدی";
+   ```
+   These aren't strictly required server-side, but exporting them via a new `GET /api/payment/card` endpoint lets the frontend fetch them from a single source (optional — see below).
+
+3. **Optional but recommended**: add `GET /api/payment/card` returning `{ number, holder }` so updating the card later only touches `.env` / server config. The frontend can fall back to hardcoded values if the call fails. **Plan keeps the values hardcoded in both places for now (simpler), and we can centralize later.**
 
 ### Files changed
+- **edited** `src/pages/CartPage.tsx` (method selector, card panel, new form fields, branching submit)
+- **edited** `server/index.js` (card-to-card branch in `/api/order`, Zibal 501 stub)
 
-- **created** `src/assets/trust/enamad.jpg`
-- **created** `src/assets/trust/emalls.svg`
-- **created** `src/assets/trust/post-ir.png`
-- **edited** `src/components/Footer.tsx` (add three imports + the trust-seals block)
-
-### Out of scope
-
-- No changes to `Header.tsx`, routing, or other pages.
-- The three placeholder seals are intentionally not linked; you can hand me their target URLs later and I'll wire each `<div>` into an `<a>`.
+### Out of scope (until you share Zibal docs)
+- Real Zibal `request` / `verify` calls and callback handling.
+- Admin UI to mark card-to-card orders as confirmed (today they land in `orders.json` as `awaiting_review`).

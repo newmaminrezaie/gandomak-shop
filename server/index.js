@@ -32,6 +32,10 @@ const CALLBACK_URL = process.env.CALLBACK_URL || "https://gandomakshop.ir/paymen
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "change-me";
 const SANDBOX = String(process.env.ZARINPAL_SANDBOX || "false") === "true";
 
+// Card-to-card destination (kept here so it's easy to swap later via env)
+const CARD_NUMBER = process.env.CARD_NUMBER || "6063731055805767";
+const CARD_HOLDER = process.env.CARD_HOLDER || "سمیرا رشیدی";
+
 const ZP_BASE = SANDBOX ? "https://sandbox.zarinpal.com" : "https://payment.zarinpal.com";
 const ZP_REQUEST = `${ZP_BASE}/pg/v4/payment/request.json`;
 const ZP_VERIFY = `${ZP_BASE}/pg/v4/payment/verify.json`;
@@ -57,9 +61,13 @@ app.use(express.json({ limit: "200kb" }));
 
 app.get("/api/health", (_req, res) => res.json({ ok: true, sandbox: SANDBOX }));
 
+app.get("/api/payment/card", (_req, res) => {
+  res.json({ number: CARD_NUMBER, holder: CARD_HOLDER });
+});
+
 app.post("/api/order", async (req, res) => {
   try {
-    const { customer, items } = req.body || {};
+    const { customer, items, paymentMethod, cardRef, paidAt } = req.body || {};
     if (!customer?.name || !customer?.phone || !customer?.address) {
       return res.status(400).json({ error: "missing_customer" });
     }
@@ -80,6 +88,39 @@ app.post("/api/order", async (req, res) => {
     }
     if (total <= 0) return res.status(400).json({ error: "no_billable_items" });
 
+    // ── Card-to-card branch ────────────────────────────────────────────
+    if (paymentMethod === "card") {
+      if (!cardRef || String(cardRef).trim().length < 4) {
+        return res.status(400).json({ error: "missing_card_ref" });
+      }
+      const orders = await readOrders();
+      const orderId = `ord_${Date.now()}`;
+      const refId = `C${Date.now().toString().slice(-6)}`;
+      orders.push({
+        id: orderId,
+        status: "awaiting_review",
+        paymentMethod: "card",
+        cardRef: String(cardRef).trim(),
+        paidAt: paidAt ? String(paidAt).trim() : "",
+        cardNumber: CARD_NUMBER,
+        cardHolder: CARD_HOLDER,
+        refId,
+        total,
+        amountRial: total * 10,
+        lines,
+        customer,
+        createdAt: new Date().toISOString(),
+      });
+      await writeOrders(orders);
+      return res.json({ ok: true, orderId, refId });
+    }
+
+    // ── Zibal branch (placeholder until endpoints are provided) ────────
+    if (paymentMethod === "zibal") {
+      return res.status(501).json({ error: "zibal_not_configured" });
+    }
+
+    // ── Default: Zarinpal flow (unchanged) ─────────────────────────────
     // Zarinpal expects amount in IRR; if your prices are in Toman, convert ×10.
     // Our products store prices in TOMAN (per the spec), so convert here.
     const amountRial = total * 10;
