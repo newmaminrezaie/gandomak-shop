@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/lib/cart";
-import wordmark from "@/assets/gandomak-wordmark.svg";
+import wordmark from "@/assets/gandomak-wordmark.png";
 
 export default function Header() {
   const { totalCount } = useCart();

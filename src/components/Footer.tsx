@@ -45,7 +45,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
           <div>
             <div className="mb-3">
-              <img src={footerLogo} alt="گندمک شاپ" className="h-24 w-auto object-contain" />
+              <img src={footerLogo} alt="گندمک شاپ" className="h-28 sm:h-32 w-auto object-contain" />
             </div>
             <p className="text-muted-foreground leading-7">
               فروشگاه آنلاین زعفران، ادویه، دمنوش و پک هدیه با بسته‌بندی اختصاصی. طعم اصیل ایران را به خانه شما می‌رسانیم.
