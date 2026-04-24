@@ -1,84 +1,56 @@
-## Performance Pass — Don't Block First Paint, Be Kind to Slow Networks
+## Findings: where Lovable branding currently lives
 
-Goal: keep the home page fast on 3G. Initial JS only ships what `/` needs; everything else (other routes, FAB, fonts) loads after first paint.
+Good news — the visible site already has zero Lovable branding:
+- `index.html` title, description, OG tags, theme color all use گندمک شاپ.
+- `public/favicon.png` and `public/logo.png` are both already the green/gold گندمک roundel (1920×1080 PNG with the brand mark centered).
 
-### 1. `index.html` — non-blocking webfont
+The remaining Lovable references are:
 
-Right now `<link rel="stylesheet" href=".../Vazirmatn...">` is render-blocking — the browser refuses to paint until the CSS arrives. On slow networks this dominates LCP. Swap it for the standard async-CSS pattern and drop the unused `300` weight:
+1. **"Edit with Lovable" floating badge** on the published site — currently `hide_badge: false` (visible).
+2. **`vite.config.ts`** — imports and uses `lovable-tagger` (a dev-only plugin that injects `data-lov-id` attributes into JSX during dev for the Lovable editor; ships nothing to production but is still a Lovable code reference).
+3. **`package.json`** — `"lovable-tagger": "^1.1.13"` in `devDependencies`.
+4. **`README.md`** — starts with "Welcome to your Lovable project" plus instructions and links pointing to lovable.dev.
+5. **Favicon shape** — the current `favicon.png` is 1920×1080 with the logo mark only ~10 % of the canvas, so when browsers render it at 16×16 / 32×32 it looks like a tiny dot in a huge empty rectangle. Worth fixing while we're touching favicons.
 
-```html
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-  rel="preload"
-  as="style"
-  href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap"
-  onload="this.onload=null;this.rel='stylesheet'"
-/>
-<noscript>
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" />
-</noscript>
-```
+## Proposed changes
 
-`display=swap` (already in URL) means text renders immediately in the system fallback and re-paints when Vazirmatn arrives — no invisible-text flash.
+### A. Remove the "Edit with Lovable" badge from the published site
+- Call `publish_settings--set_badge_visibility` with `hide_badge: true`.
 
-### 2. `src/App.tsx` — code-split routes + defer the FAB
+### B. Re-crop & re-export the favicon so it actually shows the logo
+- Generate a square, tightly-cropped favicon from the existing logo:
+  - `public/favicon.png` → 256×256, square, transparent background, logo fills ~90 % of the canvas.
+  - `public/favicon.ico` → multi-size ICO (16, 32, 48) so legacy browsers and tab bars render crisply.
+  - `public/apple-touch-icon.png` → 180×180 with the brand-green background (Apple requires opaque).
+- Update `index.html` `<link rel="icon">` tags to reference the new favicon set, with cache-busting query strings so users see the swap immediately.
+- `public/logo.png` (used for OG / social share) — re-export as a properly composed 1200×630 OG card with the logo + Persian wordmark on the brand-green background. (Falls back to current logo if you'd rather skip this; let me know.)
 
-- Keep `Index` eagerly imported (it's the home page; lazy-loading it would add a network round-trip on the most common entry).
-- `lazy()` everything else: `ProductPage`, `CartPage`, `PaymentCallback`, `NotFound`, and `FloatingCallButton`.
-- Wrap `<Routes>` in `<Suspense fallback={<RouteFallback />}>` (a tiny "در حال بارگذاری…" stub — no extra component imports).
-- Mount the FAB inside a new `<DeferredFab>` wrapper that waits for `requestIdleCallback` (with a `setTimeout(1500)` fallback) before even loading its chunk. This means the floating button's JS doesn't compete with the home page for bandwidth or CPU.
-- Tighten React Query defaults: `staleTime: 60_000`, `refetchOnWindowFocus: false` — fewer redundant requests on flaky networks.
+### C. Strip Lovable from build config
+- `vite.config.ts`: remove the `import { componentTagger } from "lovable-tagger"` line and the `mode === 'development' && componentTagger()` entry from the `plugins` array.
+- `package.json`: remove the `"lovable-tagger"` entry from `devDependencies`.
+- Run `npm install` so `package-lock.json` is updated and the dependency is dropped from `node_modules`.
 
-### 3. `vite.config.ts` — manual vendor chunks
+Note: removing `lovable-tagger` only affects the in-Lovable visual-edit overlay. Your dev server, build, and production bundle are unchanged.
 
-Today everything lands in one `vendor.js`. Split so the home page only downloads what it actually uses, and the rest can stream in (or stay cached) per-route:
+### D. Replace README.md
+Rewrite `README.md` from scratch as a project-specific readme for گندمک شاپ:
+- Project name + one-line description (Persian saffron / spice / gift-pack shop).
+- Tech stack (React 18 + Vite + Tailwind + TypeScript).
+- Local dev commands (`npm install`, `npm run dev`, `npm run build`).
+- Deploy notes pointing to `DEPLOY.md`.
+- No mention of Lovable, no lovable.dev links.
 
-```ts
-build: {
-  outDir: "dist/client",
-  emptyOutDir: true,
-  target: "es2020",
-  cssCodeSplit: true,
-  sourcemap: false,
-  chunkSizeWarningLimit: 900,
-  rollupOptions: {
-    output: {
-      manualChunks(id) {
-        if (!id.includes("node_modules")) return;
-        if (id.includes("react-router")) return "router";
-        if (id.includes("@tanstack")) return "query";
-        if (id.includes("@radix-ui")) return "radix";
-        if (id.includes("lucide-react")) return "icons";
-        if (id.includes("recharts") || id.includes("d3-")) return "charts";
-        if (id.includes("embla-carousel")) return "carousel";
-        if (id.includes("sonner") || id.includes("vaul") || id.includes("cmdk")) return "ui-misc";
-        if (id.includes("react-day-picker") || id.includes("date-fns")) return "calendar";
-        if (id.includes("react-hook-form") || id.includes("@hookform") || id.includes("zod")) return "forms";
-        return "vendor";
-      },
-    },
-  },
-},
-```
+## Out of scope
+- No changes to component source files (no Lovable strings there).
+- No changes to `.lovable/plan.md` (internal tooling file, not user-facing).
 
-Effect: `recharts`, `react-day-picker`, `embla`, etc. only download when a page that actually imports them is visited.
-
-### 4. `src/components/FloatingCallButton.tsx` — minor
-
-The component itself is already small. Once it's lazy-loaded by `<DeferredFab>` no further changes needed; its 5 s timer keeps running as designed but starts only after idle, which is fine (slightly later appearance on slow devices, intentional).
-
-### Files changed
-
-- **edited** `index.html` (async font load, drop weight 300)
-- **edited** `src/App.tsx` (lazy routes + Suspense + DeferredFab + Query defaults)
-- **edited** `vite.config.ts` (manual chunks + build tweaks)
-
-### Out of scope (flag for later if needed)
-
-- Self-hosting Vazirmatn subset (would remove the Google Fonts hop entirely — biggest remaining win on slow networks, but requires committing `.woff2` files).
-- Image preloading / `fetchpriority="high"` on the hero image.
-- A service worker for offline / repeat-visit caching.
-
-Let me know if you want any of those next.
+## Files touched
+- `public/favicon.png` (replaced)
+- `public/favicon.ico` (new)
+- `public/apple-touch-icon.png` (new)
+- `public/logo.png` (replaced — optional, confirm)
+- `index.html` (favicon link tags)
+- `vite.config.ts` (drop tagger plugin)
+- `package.json` + `package-lock.json` (drop tagger dep)
+- `README.md` (rewritten)
+- Lovable publish settings (hide badge)
