@@ -2,8 +2,8 @@
 
 این پروژه دو بخش دارد:
 
-1. **فرانت‌اند (React)** — این مخزن. خروجی استاتیک در `dist/` تولید می‌شود.
-2. **بک‌اند (Node/Express + Zarinpal)** — پوشهٔ `server/`.
+1. **فرانت‌اند (React)** — این مخزن. خروجی استاتیک در `dist/client/` تولید می‌شود.
+2. **بک‌اند (Node/Express + Zarinpal)** — پوشهٔ `server/` (پیش‌فرض پورت **8787**).
 
 ---
 
@@ -12,16 +12,23 @@
 ```bash
 npm install
 npm run build
-# خروجی: dist/
+# خروجی: dist/client/
 ```
 
-سپس محتوای `dist/` را روی VPS در مسیری مانند `/var/www/gandomak` کپی کنید.
+سپس محتوای `dist/client/` را روی VPS در مسیر `/var/www/gandomakshop/dist/client/` قرار دهید.
 
-> 📷 **عکس محصولات**: تصاویر هاردکدشده در `src/data/products.ts` به مسیر `/images/<file>.webp` اشاره می‌کنند. روی VPS، فایل‌ها را در `/var/www/gandomak/images/` قرار دهید.
+> 📷 **عکس محصولات**: تصاویر هاردکدشده در `src/data/products.ts` به مسیر `/images/<file>.webp` اشاره می‌کنند. روی VPS، فایل‌ها را در `/var/www/gandomakshop/dist/client/images/` قرار دهید.
+>
+> آپلود سریع:
+> ```bash
+> scp public/images/*.webp user@gandomakshop.ir:/var/www/gandomakshop/dist/client/images/
+> ```
 
 ---
 
 ## ۲) اجرای بک‌اند (Zarinpal)
+
+پورت پیش‌فرض در `server/index.js` و `server/.env.example` برابر **8787** است. اگر تغییرش دادید، حتماً بلاک `proxy_pass` در Nginx (پایین) را هم به‌روز کنید.
 
 ```bash
 cd server
@@ -31,10 +38,18 @@ cp .env.example .env
 #   ZARINPAL_MERCHANT_ID=کد-مرچنت-شما
 #   CALLBACK_URL=https://gandomakshop.ir/payment/callback
 #   ZARINPAL_SANDBOX=false
+#   PORT=8787
 node index.js
 # یا با pm2:
 # pm2 start index.js --name gandomak-api
 # pm2 save
+# pm2 startup    # برای اجرا در بوت
+```
+
+بررسی سلامت بک‌اند:
+```bash
+curl http://127.0.0.1:8787/api/health
+# {"ok":true,"sandbox":false}
 ```
 
 ---
@@ -50,38 +65,54 @@ server {
 
 server {
     listen 443 ssl http2;
-    server_name gandomakshop.ir;
+    server_name gandomakshop.ir www.gandomakshop.ir;
 
-    # SSL ...
+    # SSL (Let's Encrypt یا گواهی داخلی)
     # ssl_certificate     /etc/letsencrypt/live/gandomakshop.ir/fullchain.pem;
     # ssl_certificate_key /etc/letsencrypt/live/gandomakshop.ir/privkey.pem;
 
-    root /var/www/gandomak;
+    # ریشه = خروجی build فرانت
+    root /var/www/gandomakshop/dist/client;
     index index.html;
 
-    # API → Express
+    # پراکسی API → Express (PM2 روی پورت 8787)
     location /api/ {
         proxy_pass http://127.0.0.1:8787;
+        proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # تصاویر و استاتیک‌ها
-    location /images/ {
-        expires 30d;
+    # کش طولانی برای استاتیک‌ها (تصاویر، فونت، JS، CSS)
+    location ~* \.(webp|jpg|jpeg|png|svg|ico|woff2?|ttf|js|css)$ {
+        expires 1y;
         add_header Cache-Control "public, immutable";
+        try_files $uri =404;
     }
 
-    # SPA fallback
+    # SPA fallback (React Router deep-links)
     location / {
         try_files $uri $uri/ /index.html;
     }
+
+    # امنیت ساده
+    add_header X-Content-Type-Options nosniff;
+    add_header X-Frame-Options SAMEORIGIN;
+    add_header Referrer-Policy strict-origin-when-cross-origin;
 }
 ```
 
-پس از تغییر فایل‌های `.env` در `server/`، فرایند را با `pm2 restart gandomak-api` ری‌استارت کنید.
+پس از تغییر `.env` در `server/`، فرایند را ری‌استارت کنید:
+```bash
+pm2 restart gandomak-api
+```
+
+پس از تغییر کانفیگ Nginx:
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
 
 ---
 
@@ -101,4 +132,21 @@ server {
 npm run build
 ```
 
-و `dist/` را روی VPS جایگزین کنید. اگر قیمت تغییر کرد، **حتماً** `server/products.mirror.js` را هم به‌روزرسانی کنید (بک‌اند جمع را خودش از این فایل محاسبه می‌کند).
+و محتوای `dist/client/` را روی VPS جایگزین کنید. اگر قیمت تغییر کرد، **حتماً** `server/products.mirror.js` را هم به‌روزرسانی کنید (بک‌اند جمع را خودش از این فایل محاسبه می‌کند، نه از سبد کلاینت).
+
+---
+
+## ۶) ساختار نهایی روی VPS
+
+```
+/var/www/gandomakshop/
+├── dist/
+│   └── client/              ← root در Nginx
+│       ├── index.html
+│       ├── assets/          ← JS/CSS با هش
+│       └── images/          ← فایل‌های .webp محصولات
+└── server/                  ← اختیاری: کلون مخزن یا فقط پوشهٔ server/
+    ├── index.js             ← PM2: gandomak-api روی :8787
+    ├── .env
+    └── orders.json
+```
