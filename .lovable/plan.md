@@ -1,20 +1,22 @@
-## Enamad Trust Seal Slide-Up Popup
+## Fix Enamad Link to Show Shop Owner Details
 
-**Goal:** After 10 seconds on the site, slide+fade up a small square Enamad trust seal (no pill background) from the bottom-left corner so visitors notice the trust badge. Dismissible, and won't reappear in the same session.
+**Problem:** Clicking the Enamad seal opens `trustseal.enamad.ir` as a normal new tab, which shows a generic page instead of the shop's verified owner details.
 
-### What's built
+**Cause:** Enamad's verification page only renders the shop details when opened in a **sized popup window** with the proper referer — that's what the official `<a onclick="Display(this)">` snippet does. A normal `target="_blank"` anchor doesn't trigger it.
 
-**New file: `src/components/EnamadPopup.tsx`**
-- Mounts hidden, then after a 10-second timer becomes visible with a slide-up + fade-in transition (translate-y from `8` → `0`, opacity `0` → `100`, 500ms ease-out).
-- Just the square Enamad image (`src/assets/trust/enamad.jpg`) — no pill, no card chrome — wrapped in the official Enamad `trustseal.enamad.ir` link with `data-enamad-code` preserved (so Enamad's verification still works).
-- Small circular `X` close button in the corner.
-- On dismiss: fades out and writes `enamad-popup-dismissed=1` to `sessionStorage` so it doesn't reappear during the same browsing session.
-- Positioned `fixed bottom-4 left-4` (RTL-friendly bottom-left), `z-50`, sized `h-24 w-24` mobile / `h-28 w-28` desktop.
+### Changes
 
-**Edit: `src/App.tsx`**
-- Lazy-import `EnamadPopup` and render it inside the existing `DeferredFab`-style deferred mount (or alongside it) so it doesn't impact LCP. Lives outside `<Routes>` so it appears on every page.
+Both Enamad seal links — `src/components/Footer.tsx` and `src/components/EnamadPopup.tsx` — get an `onClick` handler that does:
 
-### Notes
-- Uses Tailwind transition classes (no new keyframes needed).
-- `sessionStorage` (not `localStorage`) — so returning visitors in a new session see it again, which matches the "alert viewers" goal without being annoying.
-- Respects existing design tokens (`bg-background`, `border-border`, `shadow-elegant`).
+```js
+e.preventDefault();
+window.open(
+  "https://trustseal.enamad.ir/?id=655583&Code=i679RnaSXE7EUpN1xFeht0NynDKCAwub",
+  "Popup",
+  "toolbar=no, scrollbars=yes, location=no, statusbar=no, menubar=no, resizable=1, width=450, height=630, top=30"
+);
+```
+
+The `href` stays so the link still works for middle-click / no-JS / SEO. `referrerPolicy="origin"` and `data-enamad-code` are preserved so Enamad's verification picks it up.
+
+This matches Enamad's official embed code 1:1 and makes the click open the proper shop-details popup.
