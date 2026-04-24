@@ -133,4 +133,15 @@
   /* Hide scrollbar utility */
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Hide Lovable badge */
+  a[aria-label="Edit with Lovable"],
+  a[title="Edit with Lovable"],
+  div[aria-label="Edit with Lovable"],
+  [data-testid="lovable-badge"],
+  #lovable-badge,
+  [data-lovable-badge],
+  a[href*="lovable.dev"] {
+    display: none !important;
+  }
 }
