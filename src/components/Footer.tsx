@@ -1,4 +1,4 @@
-import { Phone, Instagram, MapPin, ShieldCheck, Truck, Sparkles } from "lucide-react";
+import { Phone, MapPin, ShieldCheck, Truck, Sparkles, Mail, Send } from "lucide-react";
 import footerLogo from "@/assets/gandomak-footer-logo.png";
 import enamadSeal from "@/assets/trust/enamad.jpg";
 import emallsSeal from "@/assets/trust/emalls.svg";
@@ -65,9 +65,35 @@ export default function Footer() {
           <div>
             <h3 className="font-bold mb-3 text-primary">ارتباط با ما</h3>
             <ul className="space-y-3 text-muted-foreground">
-              <li className="flex items-start gap-2"><MapPin className="h-4 w-4 mt-1 text-accent shrink-0" /><span>ایران</span></li>
-              <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-accent shrink-0" /><a href="tel:+98" className="hover:text-primary transition-smooth fa-num">۰۲۱-۰۰۰۰۰۰۰۰</a></li>
-              <li className="flex items-center gap-2"><Instagram className="h-4 w-4 text-accent shrink-0" /><a href="https://instagram.com/" target="_blank" rel="noreferrer" className="hover:text-primary transition-smooth">gandomak.shop@</a></li>
+              <li className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 mt-1 text-accent shrink-0" />
+                <span>خراسان رضوی، قائن</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-accent shrink-0" />
+                <a href="tel:+989153750234" className="hover:text-primary transition-smooth fa-num" dir="ltr">
+                  ۰۹۱۵۳۷۵۰۲۳۴
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-accent shrink-0" />
+                <a href="mailto:Info@gandomakshop.ir" className="hover:text-primary transition-smooth" dir="ltr">
+                  Info@gandomakshop.ir
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <Send className="h-4 w-4 text-accent shrink-0" />
+                <a
+                  href="https://eitaa.com/gandomakshopir"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-primary transition-smooth"
+                  dir="ltr"
+                >
+                  @gandomakshopir
+                </a>
+                <span className="text-xs">(ایتا)</span>
+              </li>
             </ul>
           </div>
         </div>
