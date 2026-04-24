@@ -5,6 +5,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx"; // eager: home page must render fast
+import ScrollToTop from "./components/ScrollToTop";
 
 // Lazy non-home routes so the initial bundle only contains what `/` needs.
 const ProductPage = lazy(() => import("./pages/ProductPage.tsx"));
@@ -62,6 +63,7 @@ const App = () => (
       <Toaster />
       <Sonner position="top-center" dir="rtl" />
       <BrowserRouter>
+        <ScrollToTop />
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<Index />} />

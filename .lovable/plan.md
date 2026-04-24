@@ -1,21 +1,18 @@
 ## Goal
-Use the **footer's arched GANDOMAK badge** as the logo in the header (menu) too, so both spots match.
+Fix: clicking a product card on the home page navigates to the single product page but lands at the bottom (because the previous scroll position is preserved). It should always start at the top of the new page.
+
+## Root cause
+React Router does not auto-scroll to the top on route change.
 
 ## Steps
 
-1. **Header (`src/components/Header.tsx`)**
-   - Change import from `@/assets/gandomak-wordmark.png` → `@/assets/gandomak-footer-logo.png`.
-   - The badge is roughly square/tall (vs. the previous wide wordmark), so shrink the rendered size from `h-8 sm:h-10` → `h-12 sm:h-14` to keep it readable inside the 64px header without overflowing. (`h-14` = 56px, leaves 4px top/bottom padding.)
+1. **Create `src/components/ScrollToTop.tsx`** — a tiny component that watches `pathname` from `useLocation()` and calls `window.scrollTo({ top: 0, left: 0 })` on every change.
 
-2. **Hero heading (`src/components/CategoryGrid.tsx`)**
-   - Open question: the hero currently also uses the wide wordmark (`gandomak-wordmark.png`) at `h-14 sm:h-20`. You said "header and footer be the same" — leaving the hero alone by default, since the wide green/gold wordmark works better as a big page title than the badge would.
-   - If you want the hero swapped too, say the word and I'll point it at the badge with `h-20 sm:h-28`.
-
-3. **Footer (`src/components/Footer.tsx`)**
-   - No change — already uses `gandomak-footer-logo.png`.
+2. **Mount it inside `<BrowserRouter>` in `src/App.tsx`** — add the import and render `<ScrollToTop />` right after `<BrowserRouter>` opens, before `<Suspense>`.
 
 ## Files to change
-- edit: `src/components/Header.tsx` (import path + size classes)
+- new: `src/components/ScrollToTop.tsx`
+- edit: `src/App.tsx` (one import + one line inside BrowserRouter)
 
 ## Note
-The badge has a baked-in dark-green background, so it will read as a solid tile in the cream header bar — that's expected (matches what you have in the footer).
+This fixes navigation across all routes (product pages, cart, payment callback, 404), not just product pages.
