@@ -43,7 +43,7 @@ export default function CategoryGrid({ onSelect }: Props) {
       <div className="flex items-end justify-between mb-4">
         <div>
           <h1 id="cat-heading" className="leading-tight">
-            <img src={wordmark} alt="گندمک شاپ" className="h-16 sm:h-20 object-contain" />
+            <img src={wordmark} alt="گندمک شاپ" className="h-24 sm:h-32 object-contain" />
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             طعم اصیل ایران، با بسته‌بندی شایسته یک هدیه.
