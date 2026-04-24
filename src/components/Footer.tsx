@@ -1,5 +1,11 @@
 import { Phone, Instagram, MapPin, ShieldCheck, Truck, Sparkles } from "lucide-react";
 import wordmark from "@/assets/gandomak-wordmark.png";
+import enamadSeal from "@/assets/trust/enamad.jpg";
+import emallsSeal from "@/assets/trust/emalls.svg";
+import postIrSeal from "@/assets/trust/post-ir.png";
+
+const pillClass =
+  "h-20 w-20 rounded-xl bg-background border border-border flex items-center justify-center p-2 hover:shadow-elegant transition-smooth";
 
 export default function Footer() {
   return (
@@ -66,8 +72,41 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-border text-center text-xs text-muted-foreground">
-          © ۱۴۰۴ گندمک شاپ — تمامی حقوق محفوظ است.
+        <div className="mt-10 pt-6 border-t border-border">
+          <div className="text-xs text-muted-foreground text-center mb-3">نمادهای اعتماد</div>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <a
+              referrerPolicy="origin"
+              target="_blank"
+              rel="noreferrer"
+              href="https://trustseal.enamad.ir/?id=655583&Code=i679RnaSXE7EUpN1xFeht0NynDKCAwub"
+              className={pillClass}
+              aria-label="نماد اعتماد الکترونیکی"
+            >
+              <img
+                src={enamadSeal}
+                alt="نماد اعتماد الکترونیکی"
+                referrerPolicy="origin"
+                data-enamad-code="i679RnaSXE7EUpN1xFeht0NynDKCAwub"
+                className="max-h-full max-w-full object-contain"
+              />
+            </a>
+            <div className={pillClass} aria-label="ای‌مالز">
+              <img src={emallsSeal} alt="ای‌مالز" className="max-h-full max-w-full object-contain" />
+            </div>
+            <div className={pillClass} aria-label="پست جمهوری اسلامی ایران">
+              <img src={postIrSeal} alt="پست جمهوری اسلامی ایران" className="max-h-full max-w-full object-contain" />
+            </div>
+            <div
+              className="h-20 w-20 rounded-xl bg-muted border border-border flex items-center justify-center text-muted-foreground text-lg"
+              aria-label="نماد آینده"
+            >
+              …
+            </div>
+          </div>
+          <div className="mt-6 text-center text-xs text-muted-foreground">
+            © ۱۴۰۴ گندمک شاپ — تمامی حقوق محفوظ است.
+          </div>
         </div>
       </div>
     </footer>
