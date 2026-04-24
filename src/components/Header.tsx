@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/lib/cart";
-import wordmark from "@/assets/gandomak-wordmark.png";
+import wordmark from "@/assets/gandomak-footer-logo.png";
 
 export default function Header() {
   const { totalCount } = useCart();
@@ -11,7 +11,7 @@ export default function Header() {
     <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-md border-b border-border">
       <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between gap-3">
         <Link to="/" className="flex items-center group" aria-label="گندمک شاپ">
-          <img src={wordmark} alt="گندمک شاپ" className="h-8 sm:h-10 object-contain transition-smooth group-hover:scale-105" loading="eager" />
+          <img src={wordmark} alt="گندمک شاپ" className="h-12 sm:h-14 object-contain transition-smooth group-hover:scale-105" loading="eager" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
