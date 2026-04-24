@@ -6,6 +6,7 @@ import catYalda from "@/assets/cat-yalda.jpg";
 import catPopular from "@/assets/cat-popular.jpg";
 import catNew from "@/assets/cat-new.jpg";
 import catAll from "@/assets/cat-all.jpg";
+import wordmark from "@/assets/gandomak-wordmark.png";
 
 type Tile = {
   label: string;
@@ -41,8 +42,8 @@ export default function CategoryGrid({ onSelect }: Props) {
     <section id="categories" aria-labelledby="cat-heading" className="mx-auto max-w-6xl px-4 pt-5 sm:pt-8">
       <div className="flex items-end justify-between mb-4">
         <div>
-          <h1 id="cat-heading" className="text-2xl sm:text-3xl font-extrabold text-primary leading-tight">
-            گندمک شاپ
+          <h1 id="cat-heading" className="leading-tight">
+            <img src={wordmark} alt="گندمک شاپ" className="h-16 sm:h-20 object-contain" />
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             طعم اصیل ایران، با بسته‌بندی شایسته یک هدیه.

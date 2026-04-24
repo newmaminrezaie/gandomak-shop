@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/lib/cart";
-import logo from "/logo.png";
+import wordmark from "@/assets/gandomak-wordmark.png";
 
 export default function Header() {
   const { totalCount } = useCart();
@@ -10,12 +10,8 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-md border-b border-border">
       <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between gap-3">
-        <Link to="/" className="flex items-center gap-2 group" aria-label="گندمک شاپ">
-          <img src={logo} alt="لوگوی گندمک شاپ" className="h-11 w-11 object-contain transition-smooth group-hover:scale-105" loading="eager" width={44} height={44} />
-          <div className="leading-tight hidden sm:block">
-            <div className="font-extrabold text-primary text-lg">گندمک شاپ</div>
-            <div className="text-[11px] text-muted-foreground -mt-0.5">طعم اصیل ایران</div>
-          </div>
+        <Link to="/" className="flex items-center group" aria-label="گندمک شاپ">
+          <img src={wordmark} alt="گندمک شاپ" className="h-10 sm:h-12 object-contain transition-smooth group-hover:scale-105" loading="eager" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
