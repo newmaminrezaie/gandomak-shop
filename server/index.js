@@ -32,6 +32,10 @@ const CALLBACK_URL = process.env.CALLBACK_URL || "https://gandomakshop.ir/paymen
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "change-me";
 const SANDBOX = String(process.env.ZARINPAL_SANDBOX || "false") === "true";
 
+// Card-to-card destination (kept here so it's easy to swap later via env)
+const CARD_NUMBER = process.env.CARD_NUMBER || "6063731055805767";
+const CARD_HOLDER = process.env.CARD_HOLDER || "سمیرا رشیدی";
+
 const ZP_BASE = SANDBOX ? "https://sandbox.zarinpal.com" : "https://payment.zarinpal.com";
 const ZP_REQUEST = `${ZP_BASE}/pg/v4/payment/request.json`;
 const ZP_VERIFY = `${ZP_BASE}/pg/v4/payment/verify.json`;
@@ -57,9 +61,13 @@ app.use(express.json({ limit: "200kb" }));
 
 app.get("/api/health", (_req, res) => res.json({ ok: true, sandbox: SANDBOX }));
 
+app.get("/api/payment/card", (_req, res) => {
+  res.json({ number: CARD_NUMBER, holder: CARD_HOLDER });
+});
+
 app.post("/api/order", async (req, res) => {
   try {
-    const { customer, items } = req.body || {};
+    const { customer, items, paymentMethod, cardRef, paidAt } = req.body || {};
     if (!customer?.name || !customer?.phone || !customer?.address) {
       return res.status(400).json({ error: "missing_customer" });
     }
