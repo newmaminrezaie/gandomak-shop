@@ -25,7 +25,7 @@ export default function FloatingCallButton() {
   };
 
   return (
-    <div className="fixed bottom-5 left-5 z-50 animate-scale-in">
+    <div className="fixed bottom-5 right-5 z-50 animate-scale-in">
       <div className="relative">
         {/* pulsing ring */}
         <span
