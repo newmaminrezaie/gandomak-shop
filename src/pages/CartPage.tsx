@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Trash2, Plus, Minus, ShoppingBag, ShieldCheck } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, ShieldCheck, Copy, CreditCard, Wallet } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCart } from "@/lib/cart";
@@ -8,9 +8,16 @@ import { formatToman } from "@/data/products";
 import { Seo } from "@/lib/seo";
 import { toast } from "sonner";
 
+const CARD_NUMBER = "6063731055805767";
+const CARD_HOLDER = "سمیرا رشیدی";
+const CARD_NUMBER_DISPLAY = CARD_NUMBER.replace(/(\d{4})(?=\d)/g, "$1 ");
+
+type PaymentMethod = "card" | "zibal";
+
 export default function CartPage() {
   const { detailed, totalPrice, totalCount, setQty, remove, clear } = useCart();
   const [submitting, setSubmitting] = useState(false);
+  const [method, setMethod] = useState<PaymentMethod>("card");
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -19,10 +26,21 @@ export default function CartPage() {
     address: "",
     postalCode: "",
     notes: "",
+    cardRef: "",
+    paidAt: "",
   });
   const navigate = useNavigate();
 
   const update = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  const copyCard = async () => {
+    try {
+      await navigator.clipboard.writeText(CARD_NUMBER);
+      toast.success("شماره کارت کپی شد");
+    } catch {
+      toast.error("کپی نشد. لطفاً دستی کپی کنید.");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,27 +49,47 @@ export default function CartPage() {
       toast.error("لطفاً نام، شماره تماس و آدرس را وارد کنید.");
       return;
     }
+
+    if (method === "zibal") {
+      toast.info("درگاه زیبال هنوز فعال نیست. لطفاً از کارت‌به‌کارت استفاده کنید.");
+      return;
+    }
+
+    if (method === "card" && form.cardRef.trim().length < 4) {
+      toast.error("کد پیگیری واریز را وارد کنید (حداقل ۴ رقم).");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      // Posts to your Express backend (server/) on the same VPS.
-      // Backend computes total server-side, calls Zarinpal, returns { paymentUrl }.
       const res = await fetch("/api/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customer: form,
+          customer: {
+            name: form.name,
+            phone: form.phone,
+            province: form.province,
+            city: form.city,
+            address: form.address,
+            postalCode: form.postalCode,
+            notes: form.notes,
+          },
           items: detailed.map((d) => ({ id: d.product.id, qty: d.qty })),
+          paymentMethod: "card",
+          cardRef: form.cardRef.trim(),
+          paidAt: form.paidAt.trim(),
         }),
       });
       if (!res.ok) throw new Error("order_failed");
-      const data = (await res.json()) as { paymentUrl?: string };
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl;
-      } else {
-        throw new Error("no_payment_url");
-      }
+      const data = (await res.json()) as { ok?: boolean; orderId?: string; refId?: string };
+      clear();
+      const params = new URLSearchParams({ method: "card" });
+      if (data.orderId) params.set("orderId", data.orderId);
+      if (data.refId) params.set("refId", data.refId);
+      navigate(`/payment/callback?${params.toString()}`);
     } catch {
-      toast.error("اتصال به درگاه پرداخت برقرار نشد. در حالت توسعه طبیعی است؛ بک‌اند را روی VPS اجرا کنید.");
+      toast.error("ثبت سفارش انجام نشد. در حالت توسعه طبیعی است؛ بک‌اند را روی VPS اجرا کنید.");
     } finally {
       setSubmitting(false);
     }
@@ -127,17 +165,75 @@ export default function CartPage() {
                   <Field label="توضیحات" v={form.notes} on={(v) => update("notes", v)} textarea />
                 </div>
 
+                {/* Payment method picker */}
+                <div className="pt-2">
+                  <div className="text-xs text-muted-foreground mb-2">روش پرداخت</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <MethodPill
+                      active={method === "card"}
+                      onClick={() => setMethod("card")}
+                      icon={<CreditCard className="h-4 w-4" />}
+                      label="کارت‌به‌کارت"
+                    />
+                    <MethodPill
+                      active={method === "zibal"}
+                      onClick={() => setMethod("zibal")}
+                      icon={<Wallet className="h-4 w-4" />}
+                      label="درگاه زیبال"
+                    />
+                  </div>
+                </div>
+
+                {method === "card" && (
+                  <div className="rounded-xl border border-border bg-background p-3 space-y-3">
+                    <div className="text-xs text-muted-foreground leading-6">
+                      مبلغ کل سفارش را به کارت زیر واریز کنید، سپس کد پیگیری ۴ رقمی تراکنش را وارد نمایید.
+                    </div>
+                    <div className="rounded-lg bg-card border border-border p-3 space-y-1.5">
+                      <div className="text-[11px] text-muted-foreground">شماره کارت</div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="font-extrabold tracking-widest fa-num text-sm sm:text-base" dir="ltr">
+                          {CARD_NUMBER_DISPLAY}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={copyCard}
+                          className="shrink-0 inline-flex items-center gap-1 text-xs rounded-full bg-secondary text-secondary-foreground h-8 px-3 hover:opacity-90 transition-smooth"
+                        >
+                          <Copy className="h-3.5 w-3.5" /> کپی
+                        </button>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground pt-1">به نام</div>
+                      <div className="text-sm font-bold">{CARD_HOLDER}</div>
+                    </div>
+                    <Field label="کد پیگیری واریز *" v={form.cardRef} on={(v) => update("cardRef", v)} />
+                    <Field label="ساعت/تاریخ واریز (اختیاری)" v={form.paidAt} on={(v) => update("paidAt", v)} />
+                  </div>
+                )}
+
+                {method === "zibal" && (
+                  <div className="rounded-xl border border-dashed border-border bg-background p-3 text-xs text-muted-foreground leading-6">
+                    در حال اتصال به درگاه زیبال هستیم — به‌زودی فعال می‌شود. لطفاً فعلاً از کارت‌به‌کارت استفاده کنید.
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || method === "zibal"}
                   className="w-full h-12 rounded-full gradient-primary text-primary-foreground font-bold shadow-elegant transition-smooth hover:opacity-95 disabled:opacity-60"
                 >
-                  {submitting ? "در حال انتقال…" : "پرداخت با زرین‌پال"}
+                  {submitting
+                    ? "در حال ثبت…"
+                    : method === "card"
+                    ? "ثبت سفارش (کارت‌به‌کارت)"
+                    : "پرداخت با زیبال (به‌زودی)"}
                 </button>
 
-                <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-                  <ShieldCheck className="h-3.5 w-3.5 text-accent" />
-                  پرداخت امن از طریق درگاه زرین‌پال
+                <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground text-center">
+                  <ShieldCheck className="h-3.5 w-3.5 text-accent shrink-0" />
+                  {method === "card"
+                    ? "ثبت سفارش پس از واریز و ارسال کد پیگیری"
+                    : "اتصال به درگاه زیبال در حال آماده‌سازی"}
                 </div>
               </form>
             </aside>
@@ -146,6 +242,35 @@ export default function CartPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+function MethodPill({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "flex items-center justify-center gap-2 h-11 rounded-xl border text-sm font-bold transition-smooth " +
+        (active
+          ? "border-primary bg-primary/5 text-primary ring-2 ring-primary/30"
+          : "border-border bg-background text-muted-foreground hover:text-foreground")
+      }
+      aria-pressed={active}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
 
