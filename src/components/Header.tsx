@@ -11,7 +11,7 @@ export default function Header() {
     <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-md border-b border-border">
       <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between gap-3">
         <Link to="/" className="flex items-center group" aria-label="گندمک شاپ">
-          <img src={wordmark} alt="گندمک شاپ" className="h-14 sm:h-16 object-contain transition-smooth group-hover:scale-105" loading="eager" />
+          <img src={wordmark} alt="گندمک شاپ" className="h-10 sm:h-12 object-contain transition-smooth group-hover:scale-105" loading="eager" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
