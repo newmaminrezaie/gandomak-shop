@@ -20,7 +20,7 @@ export default function Header() {
           <a href="/#categories" className="text-foreground/70 hover:text-primary transition-smooth">دسته‌بندی‌ها</a>
         </nav>
 
-        <div className="flex flex-col items-end gap-1">
+        <div className="flex flex-col items-center gap-1">
           <Link
             to="/cart"
             className="relative inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-4 h-11 font-semibold text-sm shadow-soft hover:shadow-elegant transition-smooth"
