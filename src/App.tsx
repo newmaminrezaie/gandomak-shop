@@ -13,6 +13,7 @@ const PaymentCallback = lazy(() => import("./pages/PaymentCallback.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 const FloatingCallButton = lazy(() => import("./components/FloatingCallButton.tsx"));
+const EnamadPopup = lazy(() => import("./components/EnamadPopup.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +51,7 @@ function DeferredFab() {
   return (
     <Suspense fallback={null}>
       <FloatingCallButton />
+      <EnamadPopup />
     </Suspense>
   );
 }
