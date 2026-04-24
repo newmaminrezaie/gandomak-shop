@@ -51,6 +51,7 @@ function DeferredFab() {
   return (
     <Suspense fallback={null}>
       <FloatingCallButton />
+      <EnamadPopup />
     </Suspense>
   );
 }
