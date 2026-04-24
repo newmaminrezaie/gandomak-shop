@@ -1,5 +1,5 @@
 import { Phone, Instagram, MapPin, ShieldCheck, Truck, Sparkles } from "lucide-react";
-import wordmark from "@/assets/gandomak-wordmark.png";
+import footerLogo from "@/assets/gandomak-footer-logo.png";
 import enamadSeal from "@/assets/trust/enamad.jpg";
 import emallsSeal from "@/assets/trust/emalls.svg";
 import postIrSeal from "@/assets/trust/post-ir.png";
@@ -45,7 +45,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-sm">
           <div>
             <div className="mb-3">
-              <img src={wordmark} alt="گندمک شاپ" className="h-10 object-contain" />
+              <img src={footerLogo} alt="گندمک شاپ" className="h-24 w-auto object-contain" />
             </div>
             <p className="text-muted-foreground leading-7">
               فروشگاه آنلاین زعفران، ادویه، دمنوش و پک هدیه با بسته‌بندی اختصاصی. طعم اصیل ایران را به خانه شما می‌رسانیم.
