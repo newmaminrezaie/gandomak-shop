@@ -1,22 +1,34 @@
-## Fix Enamad Link to Show Shop Owner Details
+## Goal
+Replace the current PNG wordmark (`@/assets/gandomak-wordmark.png`) with the uploaded SVG `Final-0۳.svg` everywhere it's used, and rescale heights so the new logo doesn't look too small/large given its different aspect ratio.
 
-**Problem:** Clicking the Enamad seal opens `trustseal.enamad.ir` as a normal new tab, which shows a generic page instead of the shop's verified owner details.
+## Aspect ratio note
+- Old PNG wordmark renders roughly square-ish (text-only "گندمک" lockup).
+- New SVG has `viewBox="0 0 1920 1080"` → **~1.78:1 (16:9)**, and includes the wheat/G monogram + "گندمک" wordmark side by side.
+- At the same height, the new logo will be visually wider and the text portion will look smaller. So we **reduce height ~20%** to keep visual balance, while the wider footprint still gives the wordmark presence.
 
-**Cause:** Enamad's verification page only renders the shop details when opened in a **sized popup window** with the proper referer — that's what the official `<a onclick="Display(this)">` snippet does. A normal `target="_blank"` anchor doesn't trigger it.
+## Steps
 
-### Changes
+1. **Add the SVG asset**
+   - Copy `user-uploads://Final-0۳.svg` → `src/assets/gandomak-wordmark.svg` (renamed to ASCII for safe imports).
 
-Both Enamad seal links — `src/components/Footer.tsx` and `src/components/EnamadPopup.tsx` — get an `onClick` handler that does:
+2. **Update `src/components/Header.tsx`**
+   - Change import to `import wordmark from "@/assets/gandomak-wordmark.svg";`
+   - Update `<img>` className from `h-10 sm:h-12` → `h-8 sm:h-10` (compensates for wider aspect; keeps header height of 16 comfortable).
 
-```js
-e.preventDefault();
-window.open(
-  "https://trustseal.enamad.ir/?id=655583&Code=i679RnaSXE7EUpN1xFeht0NynDKCAwub",
-  "Popup",
-  "toolbar=no, scrollbars=yes, location=no, statusbar=no, menubar=no, resizable=1, width=450, height=630, top=30"
-);
-```
+3. **Update `src/components/CategoryGrid.tsx`** (hero heading)
+   - Change import to the new SVG.
+   - Update `<img>` className from `h-16 sm:h-20` → `h-12 sm:h-16` (still hero-sized but proportional).
 
-The `href` stays so the link still works for middle-click / no-JS / SEO. `referrerPolicy="origin"` and `data-enamad-code` are preserved so Enamad's verification picks it up.
+4. **Leave the Footer alone**
+   - Footer uses a different asset (`gandomak-footer-logo.png`) — not the wordmark, so it stays as-is.
 
-This matches Enamad's official embed code 1:1 and makes the click open the proper shop-details popup.
+5. **Optional cleanup**
+   - The old `src/assets/gandomak-wordmark.png` becomes unused. Leave it on disk (no risk) or delete; deletion is safe since no remaining references.
+
+## Files to change
+- new: `src/assets/gandomak-wordmark.svg`
+- edit: `src/components/Header.tsx`
+- edit: `src/components/CategoryGrid.tsx`
+
+## Open question (will assume "no" unless you say otherwise)
+Should the **footer logo** also be swapped to this same SVG? Right now it's a separate `gandomak-footer-logo.png` (a stacked/badge variant). Default plan keeps it untouched.
