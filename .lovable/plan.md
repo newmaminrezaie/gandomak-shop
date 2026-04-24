@@ -1,34 +1,37 @@
 ## Goal
-Replace the current PNG wordmark (`@/assets/gandomak-wordmark.png`) with the uploaded SVG `Final-0۳.svg` everywhere it's used, and rescale heights so the new logo doesn't look too small/large given its different aspect ratio.
+Replace the header/hero wordmark with the new uploaded `logo3.png` (green "گندمک" with gold wheat), and replace the footer logo with the new `Final-0۱-2.png` (arched green/gold badge with "GANDOMAK").
 
-## Aspect ratio note
-- Old PNG wordmark renders roughly square-ish (text-only "گندمک" lockup).
-- New SVG has `viewBox="0 0 1920 1080"` → **~1.78:1 (16:9)**, and includes the wheat/G monogram + "گندمک" wordmark side by side.
-- At the same height, the new logo will be visually wider and the text portion will look smaller. So we **reduce height ~20%** to keep visual balance, while the wider footprint still gives the wordmark presence.
+## New assets
+- `user-uploads://logo3.png` → wide horizontal lockup (~2:1). Use for **header** + **hero heading**.
+- `user-uploads://Final-0۱-2.png` → tall arched badge (~1:1.05, slightly taller than wide). Use for **footer**.
 
 ## Steps
 
-1. **Add the SVG asset**
-   - Copy `user-uploads://Final-0۳.svg` → `src/assets/gandomak-wordmark.svg` (renamed to ASCII for safe imports).
+1. **Copy assets into the project**
+   - `user-uploads://logo3.png` → `src/assets/gandomak-wordmark.png` (overwrites the old PNG; will become the active wordmark again).
+   - `user-uploads://Final-0۱-2.png` → `src/assets/gandomak-footer-logo.png` (overwrites existing footer asset).
 
-2. **Update `src/components/Header.tsx`**
-   - Change import to `import wordmark from "@/assets/gandomak-wordmark.svg";`
-   - Update `<img>` className from `h-10 sm:h-12` → `h-8 sm:h-10` (compensates for wider aspect; keeps header height of 16 comfortable).
+2. **Header (`src/components/Header.tsx`)**
+   - Switch import from `gandomak-wordmark.svg` → `gandomak-wordmark.png`.
+   - Keep height `h-8 sm:h-10` (good fit for the new ~2:1 lockup inside the 64px header).
 
-3. **Update `src/components/CategoryGrid.tsx`** (hero heading)
-   - Change import to the new SVG.
-   - Update `<img>` className from `h-16 sm:h-20` → `h-12 sm:h-16` (still hero-sized but proportional).
+3. **Hero heading (`src/components/CategoryGrid.tsx`)**
+   - Switch import from `gandomak-wordmark.svg` → `gandomak-wordmark.png`.
+   - Bump height from `h-12 sm:h-16` → `h-14 sm:h-20` so the wider lockup reads as a proper hero title.
 
-4. **Leave the Footer alone**
-   - Footer uses a different asset (`gandomak-footer-logo.png`) — not the wordmark, so it stays as-is.
+4. **Footer (`src/components/Footer.tsx`)**
+   - Keep the existing `import footerLogo from "@/assets/gandomak-footer-logo.png"` (file is being replaced on disk).
+   - The arched badge is taller and more detailed than the previous footer mark, so increase the rendered size from `h-24` → `h-28 sm:h-32` and ensure `w-auto object-contain` is preserved (already is).
 
-5. **Optional cleanup**
-   - The old `src/assets/gandomak-wordmark.png` becomes unused. Leave it on disk (no risk) or delete; deletion is safe since no remaining references.
+5. **Cleanup**
+   - Leave `src/assets/gandomak-wordmark.svg` on disk (no remaining references). Safe to ignore.
 
 ## Files to change
-- new: `src/assets/gandomak-wordmark.svg`
-- edit: `src/components/Header.tsx`
-- edit: `src/components/CategoryGrid.tsx`
+- replace (binary): `src/assets/gandomak-wordmark.png`
+- replace (binary): `src/assets/gandomak-footer-logo.png`
+- edit: `src/components/Header.tsx` (import + keep sizing)
+- edit: `src/components/CategoryGrid.tsx` (import + size bump)
+- edit: `src/components/Footer.tsx` (size bump only)
 
-## Open question (will assume "no" unless you say otherwise)
-Should the **footer logo** also be swapped to this same SVG? Right now it's a separate `gandomak-footer-logo.png` (a stacked/badge variant). Default plan keeps it untouched.
+## Notes
+- Both new logos have light/cream backgrounds baked in. The header sits on `bg-background/85` (cream) and the footer on `bg-card`, so they should blend well. If the cream square around the footer badge looks too boxy on your background, say the word and I'll either crop/transparent-ify or add a matching rounded container.
