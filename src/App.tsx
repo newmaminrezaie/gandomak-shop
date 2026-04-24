@@ -8,6 +8,7 @@ import ProductPage from "./pages/ProductPage.tsx";
 import CartPage from "./pages/CartPage.tsx";
 import PaymentCallback from "./pages/PaymentCallback.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import FloatingCallButton from "./components/FloatingCallButton.tsx";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <FloatingCallButton />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

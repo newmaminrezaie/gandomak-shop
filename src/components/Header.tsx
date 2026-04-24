@@ -20,19 +20,29 @@ export default function Header() {
           <a href="/#categories" className="text-foreground/70 hover:text-primary transition-smooth">دسته‌بندی‌ها</a>
         </nav>
 
-        <Link
-          to="/cart"
-          className="relative inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-4 h-11 font-semibold text-sm shadow-soft hover:shadow-elegant transition-smooth"
-          aria-label={`سبد خرید (${totalCount} کالا)`}
-        >
-          <ShoppingCart className="h-4 w-4" />
-          <span className="hidden sm:inline">سبد خرید</span>
-          {totalCount > 0 && (
-            <span className="fa-num inline-flex items-center justify-center min-w-[22px] h-[22px] rounded-full bg-accent text-accent-foreground text-[11px] font-bold px-1.5">
-              {new Intl.NumberFormat("fa-IR").format(totalCount)}
-            </span>
-          )}
-        </Link>
+        <div className="flex flex-col items-end gap-1">
+          <Link
+            to="/cart"
+            className="relative inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-4 h-11 font-semibold text-sm shadow-soft hover:shadow-elegant transition-smooth"
+            aria-label={`سبد خرید (${totalCount} کالا)`}
+          >
+            <ShoppingCart className="h-4 w-4" />
+            <span className="hidden sm:inline">سبد خرید</span>
+            {totalCount > 0 && (
+              <span className="fa-num inline-flex items-center justify-center min-w-[22px] h-[22px] rounded-full bg-accent text-accent-foreground text-[11px] font-bold px-1.5">
+                {new Intl.NumberFormat("fa-IR").format(totalCount)}
+              </span>
+            )}
+          </Link>
+          <a
+            href="tel:+989153750234"
+            dir="ltr"
+            className="fa-num text-[11px] sm:text-xs text-muted-foreground hover:text-primary transition-smooth tracking-wider"
+            aria-label="تماس: ۰۹۱۵ ۳۷۵ ۰۲۳۴"
+          >
+            ۰۹۱۵ ۳۷۵ ۰۲۳۴
+          </a>
+        </div>
       </div>
     </header>
   );
