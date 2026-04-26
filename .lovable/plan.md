@@ -1,41 +1,51 @@
-## Add packaging fee + shipping method selector
+## Telegram notifier — apply credentials
 
-Flat **۳۰٬۰۰۰ تومان packaging fee** (هزینه بسته‌بندی) added to every order, plus a shipping-method picker with one option for now: **پس‌کرایه شرکت ملی پست**.
+You have your bot token and chat ID:
+- `TELEGRAM_BOT_TOKEN=8742586804:AAHty8lsdLHazwlm2nLOchNsNuaNGqtFP-g`
+- `TELEGRAM_CHAT_ID=2143781867`
 
-### 1. `src/pages/CartPage.tsx`
-- Add constant `PACKAGING_FEE = 30000`.
-- Add state `shipping: "post_cod"` (only option for now) — kept as state so we can extend later.
-- New section above the payment-method picker titled **روش پست**, rendered as a single selected pill:
-  - Label: **پس‌کرایه شرکت ملی پست**
-  - Sublabel: **پرداخت هزینه ارسال هنگام تحویل**
-- Order summary updates:
-  - Show `جمع اقلام` (subtotal) = `totalPrice`
-  - New row `هزینه بسته‌بندی` = `۳۰٬۰۰۰ تومان`
-  - New row `هزینه ارسال` = **پس‌کرایه (هنگام تحویل)** (no number)
-  - `مبلغ قابل پرداخت` = `totalPrice + 30000` (shown in primary color/large)
-- Submit body sends `shippingMethod: "post_cod"` and `packagingFee: 30000` to `/api/order` (informational — server recomputes).
+Security note: the token has been shared in chat. After we finish, I recommend revoking it via @BotFather → `/mybots` → your bot → API Token → Revoke, and replacing it on the VPS. The plan still works — just paste the new token instead.
 
-### 2. `server/index.js`
-- Add `const PACKAGING_FEE = 30000;` (toman).
-- In `/api/order` after computing `total` from items:
-  - `const subtotal = total;`
-  - `total = subtotal + PACKAGING_FEE;`
-  - `const totalRial = total * 10;`
-- Validate `shippingMethod` — accept only `"post_cod"` (default to it if missing).
-- Persist new fields on the order: `subtotal_toman`, `packaging_fee`, `shipping_method` (alongside existing `total_toman` which now includes packaging).
-- Zibal `amount` uses the new `totalRial` so the buyer pays subtotal + 30k.
+### What I'll change in the codebase
 
-### 3. `server/telegram.js`
-- In the paid-order message, add lines before the total:
-  - `📦 هزینه بسته‌بندی: ۳۰٬۰۰۰ تومان`
-  - `🚚 ارسال: پس‌کرایه شرکت ملی پست (هنگام تحویل)`
-- Keep `جمع کل` showing `order.total_toman` (which now includes packaging).
+The notifier already reads `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` from environment variables (`server/telegram.js`), so no logic changes are needed. Only documentation/example files need updating so future deploys are clear.
 
-### Notes
-- Card-to-card branch: customer is instructed (existing copy) to pay "مبلغ کل سفارش" — that figure shown in UI now includes the 30k, so they transfer subtotal + 30k. No copy change needed beyond the summary numbers.
-- Postal cost itself is paid to the courier on delivery (پس‌کرایه), so it is NOT added to the online total — only the 30k packaging fee is.
+1. **`server/.env.example`** — keep the keys empty (it's a committed template, real secrets must not live here), but add a short comment pointing to the bot username `@Gandomakshopbot` so future you remembers which bot it is.
+2. **`DEPLOY.md`** — add a short "Telegram notifications" section with the exact two lines to add to `server/.env` on the VPS, plus the `pm2 restart gandomak-api` step and a one-line test (curl to `sendMessage`) to confirm delivery before relying on it for real orders.
 
-### Files touched
-- `src/pages/CartPage.tsx` — edit
-- `server/index.js` — edit
-- `server/telegram.js` — edit
+### What you need to do on the VPS (I cannot SSH in)
+
+SSH into the VPS and run:
+
+```bash
+cd /path/to/gandomak/server
+nano .env
+```
+
+Add (or update) these two lines:
+
+```
+TELEGRAM_BOT_TOKEN=8742586804:AAHty8lsdLHazwlm2nLOchNsNuaNGqtFP-g
+TELEGRAM_CHAT_ID=2143781867
+```
+
+Save, then restart and test:
+
+```bash
+pm2 restart gandomak-api
+pm2 logs gandomak-api --lines 30
+```
+
+Quick send-test (should make Telegram ping you):
+
+```bash
+curl -s "https://api.telegram.org/bot8742586804:AAHty8lsdLHazwlm2nLOchNsNuaNGqtFP-g/sendMessage" \
+  -d chat_id=2143781867 \
+  -d text="✅ Gandomak notifier connected"
+```
+
+If the curl returns `{"ok":true,...}` and you receive the message, the next paid Zibal order will trigger `notifyPaidOrder` automatically.
+
+### Optional follow-up (not in this plan unless you say yes)
+
+Currently only **Zibal-verified** orders trigger a Telegram message. **Card-to-card "awaiting review"** orders do not. If you want a notification the moment a customer submits a card-to-card order (so you can check your bank app), I can wire `notifyPaidOrder` (or a new `notifyPendingCardOrder`) into that branch in `server/index.js` as well.
