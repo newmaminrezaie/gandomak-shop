@@ -221,29 +221,23 @@ export default function CartPage() {
                   </div>
                 )}
 
-                {method === "zibal" && (
-                  <div className="rounded-xl border border-dashed border-border bg-background p-3 text-xs text-muted-foreground leading-6">
-                    در حال اتصال به درگاه زیبال هستیم — به‌زودی فعال می‌شود. لطفاً فعلاً از کارت‌به‌کارت استفاده کنید.
-                  </div>
-                )}
-
                 <button
                   type="submit"
-                  disabled={submitting || method === "zibal"}
+                  disabled={submitting}
                   className="w-full h-12 rounded-full gradient-primary text-primary-foreground font-bold shadow-elegant transition-smooth hover:opacity-95 disabled:opacity-60"
                 >
                   {submitting
                     ? "در حال ثبت…"
                     : method === "card"
                     ? "ثبت سفارش (کارت‌به‌کارت)"
-                    : "پرداخت با زیبال (به‌زودی)"}
+                    : "پرداخت با زیبال"}
                 </button>
 
                 <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground text-center">
                   <ShieldCheck className="h-3.5 w-3.5 text-accent shrink-0" />
                   {method === "card"
                     ? "ثبت سفارش پس از واریز و ارسال کد پیگیری"
-                    : "اتصال به درگاه زیبال در حال آماده‌سازی"}
+                    : "انتقال امن به درگاه پرداخت زیبال"}
                 </div>
               </form>
             </aside>
