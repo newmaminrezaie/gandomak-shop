@@ -67,7 +67,15 @@ export default function Footer() {
             <ul className="space-y-3 text-muted-foreground">
               <li className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 mt-1 text-accent shrink-0" />
-                <span>خراسان رضوی، قائن</span>
+                <span>شعبه ۱: قائن، معلم ۱۲</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 mt-1 text-accent shrink-0" />
+                <span>شعبه ۲: گناباد، خ ایثار ۱، پلاک ۸٫۰۰۱</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 mt-1 text-accent shrink-0" />
+                <span>شعبه ۳: مشهد، کوثر ۵۸</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-accent shrink-0" />

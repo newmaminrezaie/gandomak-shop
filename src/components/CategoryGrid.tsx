@@ -4,8 +4,7 @@ import catTea from "@/assets/cat-tea.jpg";
 import catGift from "@/assets/cat-gift-12.jpg";
 import catYalda from "@/assets/cat-yalda.jpg";
 import catPopular from "@/assets/cat-popular.jpg";
-import catNew from "@/assets/cat-new.jpg";
-import catAll from "@/assets/cat-all.jpg";
+import catDriedFruits from "@/assets/cat-dried-fruits.jpg";
 import wordmark from "@/assets/gandomak-wordmark.png";
 
 type Tile = {
@@ -22,8 +21,7 @@ const TILES: Tile[] = [
   { label: "پک هدیه", category: "پک هدیه", image: catGift, span: "col-span-2" },
   { label: "پرطرفدارها", category: "پرطرفدار", image: catPopular },
   { label: "هدیه ویژه", category: "پک هدیه", image: catYalda },
-  { label: "تازه‌ها", category: "تازه‌ها", image: catNew },
-  { label: "همه محصولات", category: "همه", image: catAll },
+  { label: "خشکبار", category: "خشکبار", image: catDriedFruits, span: "col-span-2" },
 ];
 
 type Props = {
