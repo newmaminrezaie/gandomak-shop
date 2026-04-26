@@ -36,6 +36,9 @@ export async function notifyPaidOrder(order) {
     `🏠 ${escapeHtml(order.customer_address)}\n` +
     (order.customer_postalcode ? `📮 ${escapeHtml(order.customer_postalcode)}\n` : "") +
     `\n🛒 <b>اقلام:</b>\n${lines}\n` +
+    (order.subtotal_toman ? `\n🧾 جمع اقلام: ${fmtToman(order.subtotal_toman)}` : "") +
+    `\n📦 هزینه بسته‌بندی: ${fmtToman(order.packaging_fee ?? 30000)}` +
+    `\n🚚 ارسال: پس‌کرایه شرکت ملی پست (هنگام تحویل)` +
     `\n💰 <b>جمع کل:</b> ${fmtToman(order.total_toman)}`;
 
   try {

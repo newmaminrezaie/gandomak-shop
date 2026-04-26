@@ -1,46 +1,41 @@
-## Changes
+## Add packaging fee + shipping method selector
 
-### 1. Category grid restructure (`src/components/CategoryGrid.tsx`)
-Currently the bottom of the 4-column grid has 4 small tiles: پرطرفدارها, هدیه ویژه, تازه‌ها, همه محصولات.
+Flat **۳۰٬۰۰۰ تومان packaging fee** (هزینه بسته‌بندی) added to every order, plus a shipping-method picker with one option for now: **پس‌کرایه شرکت ملی پست**.
 
-- Remove **همه محصولات** and **تازه‌ها** tiles.
-- Add a new **خشکبار** tile using the uploaded dried-fruits image.
-- Final last row will contain 3 tiles (col-span-2 + col-span-1 + col-span-1 layout, or three equal cards) — final TILES order:
-  1. زعفران اصل (col-span-2 row-span-2) — unchanged
-  2. ادویه‌جات
-  3. دمنوش و چای
-  4. پک هدیه (col-span-2)
-  5. پرطرفدارها
-  6. هدیه ویژه
-  7. **خشکبار** (new) — col-span-2 to fill out the last row cleanly with the two existing single tiles, OR adjust spans so the bottom row shows exactly 3 cards.
+### 1. `src/pages/CartPage.tsx`
+- Add constant `PACKAGING_FEE = 30000`.
+- Add state `shipping: "post_cod"` (only option for now) — kept as state so we can extend later.
+- New section above the payment-method picker titled **روش پست**, rendered as a single selected pill:
+  - Label: **پس‌کرایه شرکت ملی پست**
+  - Sublabel: **پرداخت هزینه ارسال هنگام تحویل**
+- Order summary updates:
+  - Show `جمع اقلام` (subtotal) = `totalPrice`
+  - New row `هزینه بسته‌بندی` = `۳۰٬۰۰۰ تومان`
+  - New row `هزینه ارسال` = **پس‌کرایه (هنگام تحویل)** (no number)
+  - `مبلغ قابل پرداخت` = `totalPrice + 30000` (shown in primary color/large)
+- Submit body sends `shippingMethod: "post_cod"` and `packagingFee: 30000` to `/api/order` (informational — server recomputes).
 
-Final layout target (the user asked for "three cards at the last row"):
+### 2. `server/index.js`
+- Add `const PACKAGING_FEE = 30000;` (toman).
+- In `/api/order` after computing `total` from items:
+  - `const subtotal = total;`
+  - `total = subtotal + PACKAGING_FEE;`
+  - `const totalRial = total * 10;`
+- Validate `shippingMethod` — accept only `"post_cod"` (default to it if missing).
+- Persist new fields on the order: `subtotal_toman`, `packaging_fee`, `shipping_method` (alongside existing `total_toman` which now includes packaging).
+- Zibal `amount` uses the new `totalRial` so the buyer pays subtotal + 30k.
 
-```text
-Row 1-2: [ زعفران (2x2) ][ ادویه ][ دمنوش ]
-Row 2:                  [ پک هدیه (col-span-2) ]
-Row 3 (last): [ پرطرفدارها ][ هدیه ویژه ][ خشکبار (col-span-2) ]
-```
+### 3. `server/telegram.js`
+- In the paid-order message, add lines before the total:
+  - `📦 هزینه بسته‌بندی: ۳۰٬۰۰۰ تومان`
+  - `🚚 ارسال: پس‌کرایه شرکت ملی پست (هنگام تحویل)`
+- Keep `جمع کل` showing `order.total_toman` (which now includes packaging).
 
-Since the grid is 4 columns, "three cards" on the last row works as 1 + 1 + 2 spans. Will implement that.
+### Notes
+- Card-to-card branch: customer is instructed (existing copy) to pay "مبلغ کل سفارش" — that figure shown in UI now includes the 30k, so they transfer subtotal + 30k. No copy change needed beyond the summary numbers.
+- Postal cost itself is paid to the courier on delivery (پس‌کرایه), so it is NOT added to the online total — only the 30k packaging fee is.
 
-Image asset:
-- Copy `user-uploads://dried-fruits-category.jpg` → `src/assets/cat-dried-fruits.jpg` and import as `catDriedFruits`.
-- Category string: `"خشکبار"` (will not yet exist in `CATEGORIES` of `src/data/products.ts`, but the existing tile click handler simply scrolls + filters — clicking it will result in an empty filtered list until products are added; acceptable per request scope).
-
-### 2. Card-to-card payment holder (`src/pages/CartPage.tsx`)
-- Change `const CARD_HOLDER = "سمیرا رشیدی";` → `const CARD_HOLDER = "یاسر شمسی";`
-
-### 3. Footer addresses (`src/components/Footer.tsx`)
-Replace the single address line `خراسان رضوی، قائن` with three branches, each with its own MapPin row:
-- شعبه ۱: قائن، معلم ۱۲
-- شعبه ۲: گناباد، خ ایثار ۱، پلاک ۸٫۰۰۱
-- شعبه ۳: مشهد، کوثر ۵۸
-
-Will use Persian digits to match the rest of the footer styling.
-
-## Files touched
-- `src/components/CategoryGrid.tsx` — edit
-- `src/assets/cat-dried-fruits.jpg` — new (copied from upload)
-- `src/pages/CartPage.tsx` — edit (one-line constant)
-- `src/components/Footer.tsx` — edit (address list)
+### Files touched
+- `src/pages/CartPage.tsx` — edit
+- `server/index.js` — edit
+- `server/telegram.js` — edit

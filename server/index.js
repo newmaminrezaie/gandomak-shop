@@ -29,7 +29,10 @@ const CALLBACK_URL = process.env.CALLBACK_URL || "https://gandomakshop.ir/paymen
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "change-me";
 
 const CARD_NUMBER = process.env.CARD_NUMBER || "6063731055805767";
-const CARD_HOLDER = process.env.CARD_HOLDER || "سمیرا رشیدی";
+const CARD_HOLDER = process.env.CARD_HOLDER || "یاسر شمسی";
+
+const PACKAGING_FEE = 30000; // toman — flat per-order packaging fee
+const ALLOWED_SHIPPING = new Set(["post_cod"]);
 
 const ZIBAL_REQUEST = "https://gateway.zibal.ir/v1/request";
 const ZIBAL_VERIFY = "https://gateway.zibal.ir/v1/verify";
@@ -62,7 +65,8 @@ app.get("/api/payment/card", (_req, res) => {
 
 app.post("/api/order", async (req, res) => {
   try {
-    const { customer, items, paymentMethod = "zibal", cardRef, paidAt } = req.body || {};
+    const { customer, items, paymentMethod = "zibal", shippingMethod, cardRef, paidAt } = req.body || {};
+    const shipping = ALLOWED_SHIPPING.has(shippingMethod) ? shippingMethod : "post_cod";
     if (!customer?.name || !customer?.phone || !customer?.address) {
       return res.status(400).json({ error: "missing_customer" });
     }
@@ -90,6 +94,8 @@ app.post("/api/order", async (req, res) => {
     }
     if (total <= 0) return res.status(400).json({ error: "no_billable_items" });
 
+    const subtotal = total;
+    total = subtotal + PACKAGING_FEE;
     const totalRial = total * 10; // products are in TOMAN
     const orderId = `ord_${Date.now()}`;
     const now = new Date().toISOString();
@@ -107,6 +113,9 @@ app.post("/api/order", async (req, res) => {
         customer_address: customer.address,
         customer_postalcode: customer.postalCode ?? "",
         items: lines,
+        subtotal_toman: subtotal,
+        packaging_fee: PACKAGING_FEE,
+        shipping_method: shipping,
         total_toman: total,
         total_rial: totalRial,
         payment_method: "card",
@@ -156,6 +165,9 @@ app.post("/api/order", async (req, res) => {
       customer_address: customer.address,
       customer_postalcode: customer.postalCode ?? "",
       items: lines,
+      subtotal_toman: subtotal,
+      packaging_fee: PACKAGING_FEE,
+      shipping_method: shipping,
       total_toman: total,
       total_rial: totalRial,
       payment_method: "zibal",

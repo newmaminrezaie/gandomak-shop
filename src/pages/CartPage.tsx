@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Trash2, Plus, Minus, ShoppingBag, ShieldCheck, Copy, CreditCard, Wallet } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, ShieldCheck, Copy, CreditCard, Wallet, Truck, Check } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCart } from "@/lib/cart";
@@ -11,13 +11,17 @@ import { toast } from "sonner";
 const CARD_NUMBER = "6063731055805767";
 const CARD_HOLDER = "یاسر شمسی";
 const CARD_NUMBER_DISPLAY = CARD_NUMBER.replace(/(\d{4})(?=\d)/g, "$1 ");
+const PACKAGING_FEE = 30000;
 
 type PaymentMethod = "card" | "zibal";
+type ShippingMethod = "post_cod";
 
 export default function CartPage() {
   const { detailed, totalPrice, totalCount, setQty, remove, clear } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [method, setMethod] = useState<PaymentMethod>("card");
+  const [shipping, setShipping] = useState<ShippingMethod>("post_cod");
+  const payable = totalPrice + PACKAGING_FEE;
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -72,6 +76,8 @@ export default function CartPage() {
           },
           items: detailed.map((d) => ({ id: d.product.id, name: d.product.name, qty: d.qty })),
           paymentMethod: method,
+          shippingMethod: shipping,
+          packagingFee: PACKAGING_FEE,
           ...(method === "card"
             ? { cardRef: form.cardRef.trim(), paidAt: form.paidAt.trim() }
             : {}),
@@ -158,9 +164,48 @@ export default function CartPage() {
                   <span className="text-muted-foreground">تعداد اقلام</span>
                   <span className="font-bold fa-num">{new Intl.NumberFormat("fa-IR").format(totalCount)}</span>
                 </div>
-                <div className="flex items-center justify-between border-b border-border pb-4">
-                  <span className="text-muted-foreground">مبلغ کل</span>
-                  <span className="font-extrabold text-primary text-lg fa-num">{formatToman(totalPrice)}</span>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">جمع اقلام</span>
+                  <span className="font-bold fa-num">{formatToman(totalPrice)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">هزینه بسته‌بندی</span>
+                  <span className="font-bold fa-num">{formatToman(PACKAGING_FEE)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">هزینه ارسال</span>
+                  <span className="text-xs text-muted-foreground">پس‌کرایه (هنگام تحویل)</span>
+                </div>
+                <div className="flex items-center justify-between border-b border-border pb-4 pt-1">
+                  <span className="font-bold">مبلغ قابل پرداخت</span>
+                  <span className="font-extrabold text-primary text-lg fa-num">{formatToman(payable)}</span>
+                </div>
+
+                {/* Shipping method picker */}
+                <div className="pt-1">
+                  <div className="text-xs text-muted-foreground mb-2">روش پست</div>
+                  <button
+                    type="button"
+                    onClick={() => setShipping("post_cod")}
+                    className={
+                      "w-full flex items-center gap-3 p-3 rounded-xl border text-right transition-smooth " +
+                      (shipping === "post_cod"
+                        ? "border-primary bg-primary/5 ring-2 ring-primary/30"
+                        : "border-border bg-background hover:border-primary/50")
+                    }
+                    aria-pressed={shipping === "post_cod"}
+                  >
+                    <Truck className="h-5 w-5 text-accent shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold">پس‌کرایه شرکت ملی پست</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">پرداخت هزینه ارسال هنگام تحویل</div>
+                    </div>
+                    {shipping === "post_cod" && (
+                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground shrink-0">
+                        <Check className="h-3.5 w-3.5" />
+                      </span>
+                    )}
+                  </button>
                 </div>
 
                 <div className="space-y-2.5">
