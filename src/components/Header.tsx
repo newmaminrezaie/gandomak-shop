@@ -9,7 +9,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-md border-b border-border">
-      <div className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between gap-3">
+      <div className="mx-auto max-w-6xl px-4 h-20 sm:h-24 flex items-center justify-between gap-3">
         <Link to="/" className="flex items-center group" aria-label="گندمک شاپ">
           <img src={wordmark} alt="گندمک شاپ" className="h-16 sm:h-20 w-auto object-contain transition-smooth group-hover:scale-105" loading="eager" />
         </Link>
