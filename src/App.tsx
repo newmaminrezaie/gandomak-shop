@@ -70,6 +70,8 @@ const App = () => (
             <Route path="/product/:slug" element={<ProductPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/payment/callback" element={<PaymentCallback />} />
+            <Route path="/payment/success" element={<PaymentCallback />} />
+            <Route path="/payment/failed" element={<PaymentCallback />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

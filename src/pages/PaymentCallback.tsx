@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -10,40 +10,37 @@ type State = "loading" | "success" | "failed";
 
 export default function PaymentCallback() {
   const [params] = useSearchParams();
+  const { pathname } = useLocation();
   const [state, setState] = useState<State>("loading");
   const [refId, setRefId] = useState<string>("");
   const { clear } = useCart();
 
   useEffect(() => {
+    // Card-to-card flow: backend already saved the order; just show success.
     const methodParam = params.get("method");
     if (methodParam === "card") {
       setRefId(params.get("refId") ?? params.get("orderId") ?? "");
       setState("success");
       return;
     }
-    const Authority = params.get("Authority");
-    const Status = params.get("Status");
-    if (!Authority || Status !== "OK") {
+
+    // Zibal: backend redirects to /payment/success or /payment/failed
+    if (pathname === "/payment/failed") {
       setState("failed");
       return;
     }
-    fetch("/api/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ authority: Authority }),
-    })
-      .then((r) => r.json())
-      .then((d: { ok: boolean; refId?: string }) => {
-        if (d.ok) {
-          setRefId(d.refId ?? "");
-          clear();
-          setState("success");
-        } else {
-          setState("failed");
-        }
-      })
-      .catch(() => setState("failed"));
-  }, [params, clear]);
+
+    if (pathname === "/payment/success") {
+      const ref = params.get("refId") ?? params.get("trackId") ?? "";
+      setRefId(ref);
+      clear();
+      setState("success");
+      return;
+    }
+
+    // Legacy / unknown — treat as failed.
+    setState("failed");
+  }, [params, pathname, clear]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

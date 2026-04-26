@@ -50,11 +50,6 @@ export default function CartPage() {
       return;
     }
 
-    if (method === "zibal") {
-      toast.info("درگاه زیبال هنوز فعال نیست. لطفاً از کارت‌به‌کارت استفاده کنید.");
-      return;
-    }
-
     if (method === "card" && form.cardRef.trim().length < 4) {
       toast.error("کد پیگیری واریز را وارد کنید (حداقل ۴ رقم).");
       return;
@@ -75,14 +70,29 @@ export default function CartPage() {
             postalCode: form.postalCode,
             notes: form.notes,
           },
-          items: detailed.map((d) => ({ id: d.product.id, qty: d.qty })),
-          paymentMethod: "card",
-          cardRef: form.cardRef.trim(),
-          paidAt: form.paidAt.trim(),
+          items: detailed.map((d) => ({ id: d.product.id, name: d.product.name, qty: d.qty })),
+          paymentMethod: method,
+          ...(method === "card"
+            ? { cardRef: form.cardRef.trim(), paidAt: form.paidAt.trim() }
+            : {}),
         }),
       });
       if (!res.ok) throw new Error("order_failed");
-      const data = (await res.json()) as { ok?: boolean; orderId?: string; refId?: string };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        orderId?: string;
+        refId?: string;
+        paymentUrl?: string;
+        trackId?: string;
+      };
+
+      if (method === "zibal") {
+        if (!data.paymentUrl) throw new Error("no_payment_url");
+        // Don't clear cart yet — only clear after successful verify on /payment/success
+        window.location.href = data.paymentUrl;
+        return;
+      }
+
       clear();
       const params = new URLSearchParams({ method: "card" });
       if (data.orderId) params.set("orderId", data.orderId);
