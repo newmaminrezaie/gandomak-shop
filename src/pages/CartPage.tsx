@@ -9,7 +9,7 @@ import { Seo } from "@/lib/seo";
 import { toast } from "sonner";
 
 const CARD_NUMBER = "6063731055805767";
-const CARD_HOLDER = "سمیرا رشیدی";
+const CARD_HOLDER = "یاسر شمسی";
 const CARD_NUMBER_DISPLAY = CARD_NUMBER.replace(/(\d{4})(?=\d)/g, "$1 ");
 
 type PaymentMethod = "card" | "zibal";
