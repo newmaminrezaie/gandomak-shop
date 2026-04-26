@@ -1,5 +1,5 @@
 import { Phone, MapPin, ShieldCheck, Truck, Sparkles, Mail, Send } from "lucide-react";
-import footerLogo from "@/assets/gandomak-footer-logo.png";
+import footerLogo from "@/assets/gandomak-logo-new.png";
 import enamadSeal from "@/assets/trust/enamad.jpg";
 import emallsSeal from "@/assets/trust/emalls.svg";
 import postIrSeal from "@/assets/trust/post-ir.png";
