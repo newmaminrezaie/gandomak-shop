@@ -150,3 +150,41 @@ npm run build
     ├── .env
     └── orders.json
 ```
+
+---
+
+## ۵) اعلان تلگرام برای سفارش‌های پرداخت‌شده
+
+ربات: **@Gandomakshopbot**
+
+روی VPS، فایل `server/.env` را ویرایش کنید و این دو خط را اضافه/به‌روزرسانی کنید:
+
+```bash
+nano /var/www/gandomakshop/server/.env
+```
+
+```
+TELEGRAM_BOT_TOKEN=8742586804:AAHty8lsdLHazwlm2nLOchNsNuaNGqtFP-g
+TELEGRAM_CHAT_ID=2143781867
+```
+
+> ⚠️ این توکن در چت لاو‌ایبل به‌اشتراک گذاشته شده است. توصیه می‌شود از طریق
+> @BotFather → `/mybots` → Gandomakshopbot → **API Token → Revoke current token**
+> یک توکن جدید بگیرید و همان را داخل `.env` بگذارید.
+
+سپس بک‌اند را ری‌استارت کنید:
+
+```bash
+pm2 restart gandomak-api
+pm2 logs gandomak-api --lines 30
+```
+
+تست سریع ارسال (باید پیامی در تلگرام دریافت کنید):
+
+```bash
+curl -s "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+  -d chat_id=${TELEGRAM_CHAT_ID} \
+  -d text="✅ Gandomak notifier connected"
+```
+
+اگر پاسخ `{"ok":true,...}` بود و پیام را گرفتید، از این پس با هر سفارش پرداخت‌شدهٔ زیبال، خلاصهٔ سفارش به‌صورت خودکار به این چت ارسال می‌شود (تابع `notifyPaidOrder` در `server/telegram.js`).
