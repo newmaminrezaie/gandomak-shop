@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Trash2, Plus, Minus, ShoppingBag, ShieldCheck, Copy, CreditCard, Wallet } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, ShieldCheck, Copy, CreditCard, Wallet, Truck, Check } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useCart } from "@/lib/cart";
@@ -11,13 +11,17 @@ import { toast } from "sonner";
 const CARD_NUMBER = "6063731055805767";
 const CARD_HOLDER = "یاسر شمسی";
 const CARD_NUMBER_DISPLAY = CARD_NUMBER.replace(/(\d{4})(?=\d)/g, "$1 ");
+const PACKAGING_FEE = 30000;
 
 type PaymentMethod = "card" | "zibal";
+type ShippingMethod = "post_cod";
 
 export default function CartPage() {
   const { detailed, totalPrice, totalCount, setQty, remove, clear } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [method, setMethod] = useState<PaymentMethod>("card");
+  const [shipping, setShipping] = useState<ShippingMethod>("post_cod");
+  const payable = totalPrice + PACKAGING_FEE;
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -72,6 +76,8 @@ export default function CartPage() {
           },
           items: detailed.map((d) => ({ id: d.product.id, name: d.product.name, qty: d.qty })),
           paymentMethod: method,
+          shippingMethod: shipping,
+          packagingFee: PACKAGING_FEE,
           ...(method === "card"
             ? { cardRef: form.cardRef.trim(), paidAt: form.paidAt.trim() }
             : {}),
