@@ -1,51 +1,38 @@
-## Telegram notifier — apply credentials
+## Goal
 
-You have your bot token and chat ID:
-- `TELEGRAM_BOT_TOKEN=8742586804:AAHty8lsdLHazwlm2nLOchNsNuaNGqtFP-g`
-- `TELEGRAM_CHAT_ID=2143781867`
+Replace the spices and saffron category images with the two newly uploaded photos, and swap their positions in the homepage category grid so **ادویه‌جات (spices)** becomes the large square tile and **زعفران (saffron)** becomes a small tile.
 
-Security note: the token has been shared in chat. After we finish, I recommend revoking it via @BotFather → `/mybots` → your bot → API Token → Revoke, and replacing it on the VPS. The plan still works — just paste the new token instead.
+## Image assignments
 
-### What I'll change in the codebase
+- `IMG_20260425_205316_298.jpg` (basket of colorful spice jars) → **spices** category
+- `IMG_20260426_170154_014.jpg` (saffron threads + decorated tin) → **saffron** category
 
-The notifier already reads `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` from environment variables (`server/telegram.js`), so no logic changes are needed. Only documentation/example files need updating so future deploys are clear.
+## Changes
 
-1. **`server/.env.example`** — keep the keys empty (it's a committed template, real secrets must not live here), but add a short comment pointing to the bot username `@Gandomakshopbot` so future you remembers which bot it is.
-2. **`DEPLOY.md`** — add a short "Telegram notifications" section with the exact two lines to add to `server/.env` on the VPS, plus the `pm2 restart gandomak-api` step and a one-line test (curl to `sendMessage`) to confirm delivery before relying on it for real orders.
+### 1. Add new images to `src/assets/`
+Copy the two uploads into the assets folder, replacing the existing files so all imports keep working:
+- `src/assets/cat-spices.jpg` ← `IMG_20260425_205316_298.jpg`
+- `src/assets/cat-saffron.jpg` ← `IMG_20260426_170154_014.jpg`
 
-### What you need to do on the VPS (I cannot SSH in)
+(Overwriting in place means no import paths in `CategoryGrid.tsx` need to change for the image swap itself.)
 
-SSH into the VPS and run:
+### 2. Swap tile positions in `src/components/CategoryGrid.tsx`
 
-```bash
-cd /path/to/gandomak/server
-nano .env
+Current `TILES` array (top of grid):
+```
+{ label: "زعفران اصل", category: "زعفران", image: catSaffron, span: "col-span-2 row-span-2" },
+{ label: "ادویه‌جات",  category: "ادویه",  image: catSpices },
 ```
 
-Add (or update) these two lines:
-
+After change — spices takes the large 2×2 square, saffron takes the small slot:
 ```
-TELEGRAM_BOT_TOKEN=8742586804:AAHty8lsdLHazwlm2nLOchNsNuaNGqtFP-g
-TELEGRAM_CHAT_ID=2143781867
-```
-
-Save, then restart and test:
-
-```bash
-pm2 restart gandomak-api
-pm2 logs gandomak-api --lines 30
+{ label: "ادویه‌جات",  category: "ادویه",  image: catSpices,  span: "col-span-2 row-span-2" },
+{ label: "زعفران اصل", category: "زعفران", image: catSaffron },
 ```
 
-Quick send-test (should make Telegram ping you):
+All other tiles (tea, gift pack, popular, special gift, dried fruits) remain unchanged.
 
-```bash
-curl -s "https://api.telegram.org/bot8742586804:AAHty8lsdLHazwlm2nLOchNsNuaNGqtFP-g/sendMessage" \
-  -d chat_id=2143781867 \
-  -d text="✅ Gandomak notifier connected"
-```
+## Notes
 
-If the curl returns `{"ok":true,...}` and you receive the message, the next paid Zibal order will trigger `notifyPaidOrder` automatically.
-
-### Optional follow-up (not in this plan unless you say yes)
-
-Currently only **Zibal-verified** orders trigger a Telegram message. **Card-to-card "awaiting review"** orders do not. If you want a notification the moment a customer submits a card-to-card order (so you can check your bank app), I can wire `notifyPaidOrder` (or a new `notifyPendingCardOrder`) into that branch in `server/index.js` as well.
+- Both uploaded images are portrait/vertical. The grid uses `object-cover`, so they will be cropped to fit — the spice basket image works well for the square 2×2 large tile, and the saffron image sits fine in the smaller cell.
+- No other files are affected (no product data, no SEO, no routing changes).
