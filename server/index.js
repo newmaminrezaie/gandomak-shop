@@ -1,65 +1,60 @@
 /**
- * گندمک شاپ — Express + Zarinpal backend
+ * گندمک شاپ — Express + Zibal backend
  * --------------------------------------
  * Run on the same VPS that serves the built React app (dist/).
- * Nginx reverse-proxies /api/* to this Node process (default :8787).
+ * Nginx reverse-proxies /api/*  AND  /payment/callback  to this Node process.
  *
- * Quick start (on your VPS):
+ * Quick start:
  *   cd server
- *   npm init -y
- *   npm i express cors
- *   cp .env.example .env   # then fill in ZARINPAL_MERCHANT_ID + CALLBACK_URL
+ *   npm install
+ *   cp .env.example .env   # then fill in ZIBAL_MERCHANT_ID + TELEGRAM_*
  *   node index.js          # or: pm2 start index.js --name gandomak-api
- *
- * Endpoints:
- *   POST /api/order      → { paymentUrl }     starts Zarinpal payment
- *   POST /api/verify     → { ok, refId }       verifies after callback
- *   GET  /api/orders     → admin (header: x-admin-token)
  */
 
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import fs from "node:fs/promises";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { PRODUCTS } from "./products.mirror.js";
+import {
+  insertOrder,
+  updateOrderStatus,
+  getOrderByTrackId,
+  listOrders,
+} from "./db.js";
+import { notifyPaidOrder } from "./telegram.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const PORT = process.env.PORT || 8787;
-const MERCHANT_ID = process.env.ZARINPAL_MERCHANT_ID || "00000000-0000-0000-0000-000000000000";
+const PORT = process.env.PORT || 3001;
+const MERCHANT_ID = process.env.ZIBAL_MERCHANT_ID || "zibal"; // 'zibal' = sandbox
 const CALLBACK_URL = process.env.CALLBACK_URL || "https://gandomakshop.ir/payment/callback";
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "change-me";
-const SANDBOX = String(process.env.ZARINPAL_SANDBOX || "false") === "true";
 
-// Card-to-card destination (kept here so it's easy to swap later via env)
 const CARD_NUMBER = process.env.CARD_NUMBER || "6063731055805767";
 const CARD_HOLDER = process.env.CARD_HOLDER || "سمیرا رشیدی";
 
-const ZP_BASE = SANDBOX ? "https://sandbox.zarinpal.com" : "https://payment.zarinpal.com";
-const ZP_REQUEST = `${ZP_BASE}/pg/v4/payment/request.json`;
-const ZP_VERIFY = `${ZP_BASE}/pg/v4/payment/verify.json`;
-const ZP_GATEWAY = (authority) => `${ZP_BASE}/pg/StartPay/${authority}`;
+const ZIBAL_REQUEST = "https://gateway.zibal.ir/v1/request";
+const ZIBAL_VERIFY = "https://gateway.zibal.ir/v1/verify";
+const ZIBAL_START = (trackId) => `https://gateway.zibal.ir/start/${trackId}`;
 
-const ORDERS_FILE = path.join(__dirname, "orders.json");
+// Where the SPA's success / failure pages live (relative to site root)
+const SUCCESS_PATH = "/payment/success";
+const FAILED_PATH = "/payment/failed";
 
-async function readOrders() {
+// Derive the site origin from CALLBACK_URL so we can redirect back to the SPA
+function siteOrigin() {
   try {
-    const raw = await fs.readFile(ORDERS_FILE, "utf8");
-    return JSON.parse(raw);
+    return new URL(CALLBACK_URL).origin;
   } catch {
-    return [];
+    return "";
   }
-}
-async function writeOrders(arr) {
-  await fs.writeFile(ORDERS_FILE, JSON.stringify(arr, null, 2), "utf8");
 }
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "200kb" }));
 
-app.get("/api/health", (_req, res) => res.json({ ok: true, sandbox: SANDBOX }));
+app.get("/api/health", (_req, res) =>
+  res.json({ ok: true, merchant: MERCHANT_ID === "zibal" ? "sandbox" : "live" })
+);
 
 app.get("/api/payment/card", (_req, res) => {
   res.json({ number: CARD_NUMBER, holder: CARD_HOLDER });
@@ -67,7 +62,7 @@ app.get("/api/payment/card", (_req, res) => {
 
 app.post("/api/order", async (req, res) => {
   try {
-    const { customer, items, paymentMethod, cardRef, paidAt } = req.body || {};
+    const { customer, items, paymentMethod = "zibal", cardRef, paidAt } = req.body || {};
     if (!customer?.name || !customer?.phone || !customer?.address) {
       return res.status(400).json({ error: "missing_customer" });
     }
@@ -84,127 +79,178 @@ app.post("/api/order", async (req, res) => {
       if (p.price <= 0) continue; // contact-for-price items skipped
       const qty = Math.max(1, Math.min(99, Number(it.qty) || 1));
       total += p.price * qty;
-      lines.push({ id: p.id, name: p.name, qty, price: p.price });
+      lines.push({
+        id: p.id,
+        // The mirror only has id+price; use the id as a fallback name
+        // (frontend cart already shows the rich data — this is just for ops/Telegram).
+        name: it.name || p.id,
+        qty,
+        price: p.price,
+      });
     }
     if (total <= 0) return res.status(400).json({ error: "no_billable_items" });
+
+    const totalRial = total * 10; // products are in TOMAN
+    const orderId = `ord_${Date.now()}`;
+    const now = new Date().toISOString();
 
     // ── Card-to-card branch ────────────────────────────────────────────
     if (paymentMethod === "card") {
       if (!cardRef || String(cardRef).trim().length < 4) {
         return res.status(400).json({ error: "missing_card_ref" });
       }
-      const orders = await readOrders();
-      const orderId = `ord_${Date.now()}`;
       const refId = `C${Date.now().toString().slice(-6)}`;
-      orders.push({
+      insertOrder({
         id: orderId,
+        customer_name: customer.name,
+        customer_phone: customer.phone,
+        customer_address: customer.address,
+        customer_postalcode: customer.postalCode ?? "",
+        items: lines,
+        total_toman: total,
+        total_rial: totalRial,
+        payment_method: "card",
+        track_id: null,
+        ref_number: refId,
+        card_number: CARD_NUMBER,
+        card_ref: String(cardRef).trim(),
+        paid_at: paidAt ? String(paidAt).trim() : null,
         status: "awaiting_review",
-        paymentMethod: "card",
-        cardRef: String(cardRef).trim(),
-        paidAt: paidAt ? String(paidAt).trim() : "",
-        cardNumber: CARD_NUMBER,
-        cardHolder: CARD_HOLDER,
-        refId,
-        total,
-        amountRial: total * 10,
-        lines,
-        customer,
-        createdAt: new Date().toISOString(),
+        created_at: now,
       });
-      await writeOrders(orders);
       return res.json({ ok: true, orderId, refId });
     }
 
-    // ── Zibal branch (placeholder until endpoints are provided) ────────
-    if (paymentMethod === "zibal") {
-      return res.status(501).json({ error: "zibal_not_configured" });
+    // ── Zibal branch ───────────────────────────────────────────────────
+    if (paymentMethod !== "zibal") {
+      return res.status(400).json({ error: "unknown_payment_method" });
     }
 
-    // ── Default: Zarinpal flow (unchanged) ─────────────────────────────
-    // Zarinpal expects amount in IRR; if your prices are in Toman, convert ×10.
-    // Our products store prices in TOMAN (per the spec), so convert here.
-    const amountRial = total * 10;
-
-    const zpRes = await fetch(ZP_REQUEST, {
+    const zRes = await fetch(ZIBAL_REQUEST, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        merchant_id: MERCHANT_ID,
-        amount: amountRial,
-        currency: "IRR",
+        merchant: MERCHANT_ID,
+        amount: totalRial,
+        callbackUrl: CALLBACK_URL,
         description: `سفارش گندمک شاپ - ${customer.name}`,
-        callback_url: CALLBACK_URL,
-        metadata: { mobile: customer.phone, name: customer.name },
+        mobile: customer.phone,
+        orderId,
       }),
     });
-    const zpJson = await zpRes.json();
-
-    if (zpJson?.data?.code !== 100 || !zpJson?.data?.authority) {
-      return res.status(502).json({ error: "zarinpal_request_failed", detail: zpJson });
+    const zJson = await zRes.json().catch(() => ({}));
+    if (zJson?.result !== 100 || !zJson?.trackId) {
+      console.error("[zibal] request failed:", zJson);
+      return res.status(502).json({
+        error: "zibal_request_failed",
+        result: zJson?.result,
+        message: zJson?.message,
+      });
     }
-    const authority = zpJson.data.authority;
+    const trackId = String(zJson.trackId);
 
-    const orders = await readOrders();
-    orders.push({
-      id: `ord_${Date.now()}`,
-      authority,
+    insertOrder({
+      id: orderId,
+      customer_name: customer.name,
+      customer_phone: customer.phone,
+      customer_address: customer.address,
+      customer_postalcode: customer.postalCode ?? "",
+      items: lines,
+      total_toman: total,
+      total_rial: totalRial,
+      payment_method: "zibal",
+      track_id: trackId,
       status: "pending",
-      total,
-      amountRial,
-      lines,
-      customer,
-      createdAt: new Date().toISOString(),
+      created_at: now,
     });
-    await writeOrders(orders);
 
-    return res.json({ paymentUrl: ZP_GATEWAY(authority) });
+    return res.json({ paymentUrl: ZIBAL_START(trackId), trackId, orderId });
   } catch (err) {
-    console.error(err);
+    console.error("[order] error:", err);
     return res.status(500).json({ error: "server_error" });
   }
 });
 
-app.post("/api/verify", async (req, res) => {
+// Zibal redirects the buyer's browser here as a GET.
+app.get("/payment/callback", async (req, res) => {
+  const origin = siteOrigin();
+  const trackId = String(req.query.trackId ?? "");
+  const success = String(req.query.success ?? "");
+
+  if (!trackId) {
+    return res.redirect(302, `${origin}${FAILED_PATH}?reason=no_track`);
+  }
+
+  const order = getOrderByTrackId(trackId);
+  if (!order) {
+    return res.redirect(302, `${origin}${FAILED_PATH}?reason=not_found&trackId=${trackId}`);
+  }
+
+  if (success !== "1") {
+    updateOrderStatus({ id: order.id, status: "failed" });
+    return res.redirect(302, `${origin}${FAILED_PATH}?trackId=${trackId}`);
+  }
+
   try {
-    const { authority } = req.body || {};
-    if (!authority) return res.status(400).json({ ok: false, error: "missing_authority" });
-
-    const orders = await readOrders();
-    const order = orders.find((o) => o.authority === authority);
-    if (!order) return res.status(404).json({ ok: false, error: "order_not_found" });
-
-    const zpRes = await fetch(ZP_VERIFY, {
+    const vRes = await fetch(ZIBAL_VERIFY, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        merchant_id: MERCHANT_ID,
-        amount: order.amountRial,
-        authority,
-      }),
+      body: JSON.stringify({ merchant: MERCHANT_ID, trackId: Number(trackId) }),
     });
-    const zpJson = await zpRes.json();
-
-    if (zpJson?.data?.code === 100 || zpJson?.data?.code === 101) {
-      order.status = "paid";
-      order.refId = String(zpJson.data.ref_id);
-      order.paidAt = new Date().toISOString();
-      await writeOrders(orders);
-      return res.json({ ok: true, refId: order.refId });
+    const vJson = await vRes.json().catch(() => ({}));
+    // 100 = verified now, 201 = already verified previously
+    if (vJson?.result === 100 || vJson?.result === 201) {
+      const refNumber = vJson?.refNumber ? String(vJson.refNumber) : trackId;
+      const updated = updateOrderStatus({
+        id: order.id,
+        status: "paid",
+        ref_number: refNumber,
+        paid_at: new Date().toISOString(),
+      });
+      // Fire-and-forget Telegram notification
+      notifyPaidOrder(updated).catch((e) =>
+        console.error("[telegram] notify failed:", e)
+      );
+      return res.redirect(
+        302,
+        `${origin}${SUCCESS_PATH}?trackId=${trackId}&refId=${encodeURIComponent(refNumber)}`
+      );
     }
-    order.status = "failed";
-    await writeOrders(orders);
-    return res.json({ ok: false });
+
+    console.error("[zibal] verify failed:", vJson);
+    updateOrderStatus({ id: order.id, status: "failed" });
+    return res.redirect(
+      302,
+      `${origin}${FAILED_PATH}?trackId=${trackId}&result=${vJson?.result ?? "?"}`
+    );
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ ok: false, error: "server_error" });
+    console.error("[callback] error:", err);
+    updateOrderStatus({ id: order.id, status: "failed" });
+    return res.redirect(302, `${origin}${FAILED_PATH}?trackId=${trackId}&reason=server_error`);
   }
 });
 
-app.get("/api/orders", async (req, res) => {
+// Lightweight status lookup for the SPA success page
+app.get("/api/order/status", (req, res) => {
+  const trackId = String(req.query.trackId ?? "");
+  if (!trackId) return res.status(400).json({ error: "missing_trackId" });
+  const order = getOrderByTrackId(trackId);
+  if (!order) return res.status(404).json({ error: "not_found" });
+  return res.json({
+    id: order.id,
+    status: order.status,
+    refId: order.ref_number,
+    total: order.total_toman,
+  });
+});
+
+app.get("/api/orders", (req, res) => {
   if (req.headers["x-admin-token"] !== ADMIN_TOKEN) return res.status(401).end();
-  res.json(await readOrders());
+  res.json(listOrders());
 });
 
 app.listen(PORT, () => {
-  console.log(`گندمک API → http://localhost:${PORT} (sandbox=${SANDBOX})`);
+  console.log(
+    `گندمک API → http://localhost:${PORT} (merchant=${MERCHANT_ID === "zibal" ? "sandbox" : "live"})`
+  );
 });
