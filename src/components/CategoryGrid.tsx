@@ -15,8 +15,8 @@ type Tile = {
 };
 
 const TILES: Tile[] = [
-  { label: "زعفران اصل", category: "زعفران", image: catSaffron, span: "col-span-2 row-span-2" },
-  { label: "ادویه‌جات", category: "ادویه", image: catSpices },
+  { label: "ادویه‌جات", category: "ادویه", image: catSpices, span: "col-span-2 row-span-2" },
+  { label: "زعفران اصل", category: "زعفران", image: catSaffron },
   { label: "دمنوش و چای", category: "دمنوش و چای", image: catTea },
   { label: "پک هدیه", category: "پک هدیه", image: catGift, span: "col-span-2" },
   { label: "پرطرفدارها", category: "پرطرفدار", image: catPopular },
