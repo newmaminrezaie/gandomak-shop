@@ -31,7 +31,7 @@ export default function FloatingCallButton() {
           href={`tel:${PHONE_TEL}`}
           aria-label={`تماس با ما ${PHONE_DISPLAY}`}
           title={PHONE_DISPLAY}
-          className="relative inline-flex items-center justify-center h-11 w-11 rounded-full bg-card/80 backdrop-blur-sm text-foreground/70 border border-border shadow-soft hover:text-primary hover:border-primary/40 transition-smooth"
+          className="relative inline-flex items-center justify-center h-11 w-11 rounded-full gradient-primary text-primary-foreground shadow-soft hover:opacity-90 transition-smooth"
         >
           <Phone className="h-4 w-4" />
         </a>
