@@ -25,28 +25,23 @@ export default function FloatingCallButton() {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 animate-scale-in">
+    <div className="fixed bottom-5 right-5 z-50">
       <div className="relative">
-        {/* pulsing ring */}
-        <span
-          aria-hidden
-          className="absolute inset-0 rounded-full bg-primary/40 animate-ping"
-        />
         <a
           href={`tel:${PHONE_TEL}`}
           aria-label={`تماس با ما ${PHONE_DISPLAY}`}
           title={PHONE_DISPLAY}
-          className="relative inline-flex items-center justify-center h-14 w-14 rounded-full gradient-primary text-primary-foreground shadow-elegant hover:scale-105 transition-smooth"
+          className="relative inline-flex items-center justify-center h-11 w-11 rounded-full bg-card/80 backdrop-blur-sm text-foreground/70 border border-border shadow-soft hover:text-primary hover:border-primary/40 transition-smooth"
         >
-          <Phone className="h-6 w-6" />
+          <Phone className="h-4 w-4" />
         </a>
         <button
           type="button"
           onClick={dismiss}
           aria-label="بستن"
-          className="absolute -top-1 -left-1 h-5 w-5 rounded-full bg-card text-muted-foreground border border-border flex items-center justify-center shadow-soft hover:text-foreground transition-smooth"
+          className="absolute -top-1 -left-1 h-4 w-4 rounded-full bg-card text-muted-foreground/70 border border-border flex items-center justify-center hover:text-foreground transition-smooth"
         >
-          <X className="h-3 w-3" />
+          <X className="h-2.5 w-2.5" />
         </button>
       </div>
     </div>
