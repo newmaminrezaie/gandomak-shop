@@ -234,9 +234,6 @@ export default function AdminOrdersPage() {
               آفلاین
             </span>
           )}
-          {fromCache && (
-            <Badge variant="outline" className="text-xs">از حافظه</Badge>
-          )}
           {fetchedAt && (
             <span className="text-xs text-muted-foreground hidden sm:inline">
               آخرین بروزرسانی: {fmtDate(fetchedAt)}
