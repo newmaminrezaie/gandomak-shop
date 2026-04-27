@@ -23,7 +23,7 @@ import { formatToman } from "@/data/products";
 import { Seo } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+
 import {
   Sheet,
   SheetContent,
