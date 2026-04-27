@@ -1,21 +1,14 @@
 ## Goal
 
-Restrict the floating Enamad trust seal popup so it appears **only on the home page (`/`)**, and not on the cart, checkout, product, payment, or 404 pages. The floating call button stays everywhere as today.
+Restrict the floating call button (phone icon) to appear **only on the home page (`/`)**, matching the Enamad popup behavior.
 
 ## Changes
 
-**`src/App.tsx`** — gate `<EnamadPopup />` by route inside the `DeferredFab` component.
-
-- Import `useLocation` from `react-router-dom`.
-- In `DeferredFab`, read `location.pathname` and compute `isHome = pathname === "/"`.
-- Render `<EnamadPopup />` only when `isHome` is true. `<FloatingCallButton />` continues to render on all routes.
+**`src/App.tsx`** — gate `<FloatingCallButton />` by route inside `DeferredFab`, reusing the existing `isHome` check.
 
 ```tsx
-const location = useLocation();
-const isHome = location.pathname === "/";
-...
-<FloatingCallButton />
+{isHome && <FloatingCallButton />}
 {isHome && <EnamadPopup />}
 ```
 
-No other files need changes. The popup's existing 10s delay and session-dismiss behavior remain intact.
+No other files need changes.
