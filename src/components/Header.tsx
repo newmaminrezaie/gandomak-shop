@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/lib/cart";
+import MiniCart from "@/components/MiniCart";
 import wordmark from "@/assets/gandomak-logo-new.png";
 
 export default function Header() {
   const { totalCount } = useCart();
   const { pathname } = useLocation();
+  const [cartOpen, setCartOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 bg-background/85 backdrop-blur-md border-b border-border">
@@ -21,8 +24,9 @@ export default function Header() {
         </nav>
 
         <div className="flex flex-col items-center gap-1">
-          <Link
-            to="/cart"
+          <button
+            type="button"
+            onClick={() => setCartOpen(true)}
             className="relative inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-4 h-11 font-semibold text-sm shadow-soft hover:shadow-elegant transition-smooth"
             aria-label={`سبد خرید (${totalCount} کالا)`}
           >
@@ -33,7 +37,7 @@ export default function Header() {
                 {new Intl.NumberFormat("fa-IR").format(totalCount)}
               </span>
             )}
-          </Link>
+          </button>
           <a
             href="tel:+989153750234"
             dir="ltr"
@@ -44,6 +48,8 @@ export default function Header() {
           </a>
         </div>
       </div>
+
+      <MiniCart open={cartOpen} onOpenChange={setCartOpen} />
     </header>
   );
 }
