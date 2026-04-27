@@ -559,7 +559,7 @@ export default function AdminOrdersPage() {
               </div>
             </>
           )}
-        </Sheet Content>
+        </SheetContent>
       </Sheet>
     </div>
   );
