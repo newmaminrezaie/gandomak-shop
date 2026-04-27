@@ -146,7 +146,7 @@ export default function AdminOrdersPage() {
     setError(null);
     const res = await fetchOrders(token);
     setLoading(false);
-    if (!res.ok) {
+    if (res.ok === false) {
       setError(res.error);
       if (res.status === 401) {
         clearAdminToken();
