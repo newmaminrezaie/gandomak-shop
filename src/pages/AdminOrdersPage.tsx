@@ -119,7 +119,6 @@ export default function AdminOrdersPage() {
   const [token, setToken] = useState<string | null>(() => getAdminToken());
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(false);
-  const [fromCache, setFromCache] = useState(false);
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
@@ -128,16 +127,6 @@ export default function AdminOrdersPage() {
   const [online, setOnline] = useState(
     typeof navigator !== "undefined" ? navigator.onLine : true
   );
-
-  // Hydrate from cache instantly on first mount (offline-first)
-  useEffect(() => {
-    const cached = readOrdersCache();
-    if (cached && cached.orders.length) {
-      setOrders(cached.orders);
-      setFromCache(true);
-      setFetchedAt(cached.fetchedAt);
-    }
-  }, []);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -154,9 +143,7 @@ export default function AdminOrdersPage() {
       return;
     }
     setOrders(res.orders);
-    setFromCache(res.fromCache);
     setFetchedAt(res.fetchedAt);
-    if ("error" in res && res.error) setError(res.error);
   }, [token]);
 
   useEffect(() => {
