@@ -17,7 +17,6 @@ import {
   clearAdminToken,
   fetchOrders,
   getAdminToken,
-  readOrdersCache,
   setAdminToken,
 } from "@/lib/adminApi";
 import { formatToman } from "@/data/products";
