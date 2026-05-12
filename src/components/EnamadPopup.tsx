@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import enamadSeal from "@/assets/trust/enamad.jpg";
 
+const ENAMAD_LINK = "https://trustseal.enamad.ir/?id=720710&Code=wRYn3reyeBtj2jZJ2oZYzZfyeKkh6don";
+const ENAMAD_LOGO = "https://trustseal.enamad.ir/logo.aspx?id=720710&Code=wRYn3reyeBtj2jZJ2oZYzZfyeKkh6don";
+const ENAMAD_CODE = "wRYn3reyeBtj2jZJ2oZYzZfyeKkh6don";
 const STORAGE_KEY = "enamad-popup-dismissed";
 
 export default function EnamadPopup() {
