@@ -116,11 +116,11 @@ export default function Footer() {
               referrerPolicy="origin"
               target="_blank"
               rel="noreferrer"
-              href="https://trustseal.enamad.ir/?id=655583&Code=i679RnaSXE7EUpN1xFeht0NynDKCAwub"
+              href={ENAMAD_LINK}
               onClick={(e) => {
                 e.preventDefault();
                 window.open(
-                  "https://trustseal.enamad.ir/?id=655583&Code=i679RnaSXE7EUpN1xFeht0NynDKCAwub",
+                  ENAMAD_LINK,
                   "Popup",
                   "toolbar=no, scrollbars=yes, location=no, statusbar=no, menubar=no, resizable=1, width=450, height=630, top=30"
                 );
@@ -129,10 +129,10 @@ export default function Footer() {
               aria-label="نماد اعتماد الکترونیکی"
             >
               <img
-                src={enamadSeal}
-                alt="نماد اعتماد الکترونیکی"
+                src={ENAMAD_LOGO}
+                alt=""
                 referrerPolicy="origin"
-                data-enamad-code="i679RnaSXE7EUpN1xFeht0NynDKCAwub"
+                data-enamad-code={ENAMAD_CODE}
                 className="max-h-full max-w-full object-contain"
               />
             </a>
