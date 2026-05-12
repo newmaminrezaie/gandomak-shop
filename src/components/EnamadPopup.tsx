@@ -55,7 +55,8 @@ export default function EnamadPopup() {
 
         <a
           target="_blank"
-          rel="noreferrer"
+          rel="noopener"
+          referrerPolicy="origin"
           href={ENAMAD_LINK}
           aria-label="نماد اعتماد الکترونیکی"
           className="block rounded-md overflow-hidden shadow-elegant hover:scale-[1.02] transition-transform"
@@ -64,7 +65,8 @@ export default function EnamadPopup() {
             src={ENAMAD_LOGO}
             alt=""
             referrerPolicy="origin"
-            data-enamad-code={ENAMAD_CODE}
+            style={{ cursor: "pointer" }}
+            {...({ code: ENAMAD_CODE } as React.ImgHTMLAttributes<HTMLImageElement>)}
             className="block h-24 w-24 sm:h-28 sm:w-28 object-cover"
           />
         </a>

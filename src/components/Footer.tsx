@@ -115,16 +115,8 @@ export default function Footer() {
             <a
               referrerPolicy="origin"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener"
               href={ENAMAD_LINK}
-              onClick={(e) => {
-                e.preventDefault();
-                window.open(
-                  ENAMAD_LINK,
-                  "Popup",
-                  "toolbar=no, scrollbars=yes, location=no, statusbar=no, menubar=no, resizable=1, width=450, height=630, top=30"
-                );
-              }}
               className={pillClass}
               aria-label="نماد اعتماد الکترونیکی"
             >
@@ -132,7 +124,8 @@ export default function Footer() {
                 src={ENAMAD_LOGO}
                 alt=""
                 referrerPolicy="origin"
-                data-enamad-code={ENAMAD_CODE}
+                style={{ cursor: "pointer" }}
+                {...({ code: ENAMAD_CODE } as React.ImgHTMLAttributes<HTMLImageElement>)}
                 className="max-h-full max-w-full object-contain"
               />
             </a>
