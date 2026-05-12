@@ -56,15 +56,15 @@ export default function EnamadPopup() {
         <a
           target="_blank"
           rel="noreferrer"
-          href="https://trustseal.enamad.ir/?id=655583&Code=i679RnaSXE7EUpN1xFeht0NynDKCAwub"
+          href={ENAMAD_LINK}
           aria-label="نماد اعتماد الکترونیکی"
           className="block rounded-md overflow-hidden shadow-elegant hover:scale-[1.02] transition-transform"
         >
           <img
-            src={enamadSeal}
-            alt="نماد اعتماد الکترونیکی"
+            src={ENAMAD_LOGO}
+            alt=""
             referrerPolicy="origin"
-            data-enamad-code="i679RnaSXE7EUpN1xFeht0NynDKCAwub"
+            data-enamad-code={ENAMAD_CODE}
             className="block h-24 w-24 sm:h-28 sm:w-28 object-cover"
           />
         </a>
