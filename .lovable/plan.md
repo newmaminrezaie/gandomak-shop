@@ -1,41 +1,49 @@
 ## Goal
 
-Make the Enamad seal (popup + footer) open your unique trust page at id `720710` instead of a generic Enamad page.
+Replace Vazirmatn (loaded from Google Fonts CDN) with **Estedad**, fully self-hosted so the site renders 100% offline with no third-party font requests.
 
-## Root cause
+## Why Estedad
 
-Enamad's trust page validates incoming clicks against the seal markup it serves. Two things must match their official snippet exactly:
+Estedad is a modern, warm, premium-feeling Persian sans designed as an upgrade to Vazirmatn — better suited for a saffron / spice / gift shop's editorial tone. Free, open-source (SIL OFL), full Latin + Arabic/Persian glyphs, all weights.
 
-1. The `<img>` must carry a literal `code="wRYn3reyeBtj2jZJ2oZYzZfyeKkh6don"` attribute (we currently use `data-enamad-code`, which Enamad ignores).
-2. The image must be loaded from `https://trustseal.enamad.ir/logo.aspx?id=...&Code=...` with `referrerpolicy="origin"` so Enamad's server records the referer and binds the click to your seal.
+## Files to add
 
-When either is missing, clicking the seal lands on Enamad's generic "seal not verified / not found" page instead of your unique page.
+Self-hosted woff2 files in `public/fonts/estedad/`:
 
-## Changes
+```
+public/fonts/estedad/
+  Estedad-Regular.woff2     (400)
+  Estedad-Medium.woff2      (500)
+  Estedad-SemiBold.woff2    (600)
+  Estedad-Bold.woff2        (700)
+  Estedad-ExtraBold.woff2   (800)
+```
 
-### `src/components/EnamadPopup.tsx`
-- Replace `data-enamad-code={ENAMAD_CODE}` on the `<img>` with the literal attribute Enamad expects. In React/TSX this requires either `dangerouslySetInnerHTML` on the wrapping `<a>` or spreading an unknown prop:
-  ```tsx
-  <img
-    src={ENAMAD_LOGO}
-    alt=""
-    referrerPolicy="origin"
-    style={{ cursor: "pointer" }}
-    {...({ code: ENAMAD_CODE } as React.ImgHTMLAttributes<HTMLImageElement>)}
-    className="block h-24 w-24 sm:h-28 sm:w-28 object-cover"
-  />
+Sourced from the official Estedad GitHub release (`aminabbasi/Estedad-Font`) — fetched once at build time and committed into `public/`. After this, the browser never contacts Google or any external host for fonts.
+
+## Files to change
+
+### `index.html`
+- Remove `<link rel="preconnect" href="https://fonts.googleapis.com">`
+- Remove `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`
+- Remove the Vazirmatn `<link>` and its `<noscript>` fallback (lines ~27–42).
+- Add `<link rel="preload" as="font" type="font/woff2" href="/fonts/estedad/Estedad-Regular.woff2" crossorigin>` for the critical weight only.
+
+### `src/index.css`
+- Add `@font-face` declarations at the top for all 5 weights with `font-display: swap` and `unicode-range` covering Arabic + Latin.
+- Change body `font-family` from `'Vazirmatn', system-ui, ...` to `'Estedad', system-ui, -apple-system, 'Segoe UI', sans-serif`.
+
+### `tailwind.config.ts`
+- Update both font tokens:
+  ```ts
+  sans:    ["Estedad", "system-ui", "sans-serif"],
+  display: ["Estedad", "system-ui", "sans-serif"],
   ```
-- Keep `href={ENAMAD_LINK}`, `target="_blank"`, `rel="noreferrer"` removed in favor of `rel="noopener"` (we must NOT strip the referrer — Enamad needs it). Use `rel="noopener"` only.
-
-### `src/components/Footer.tsx`
-- Same `code` attribute fix on the footer `<img>`.
-- Remove the `onClick` handler that calls `window.open(...)` — `window.open` with a name strips the referrer in some browsers, which can also break verification. Let the `<a target="_blank">` handle it natively (this also matches Enamad's official snippet).
-- Use `rel="noopener"` (not `noreferrer`).
-
-### Note on the `code` attribute and React warning
-
-React will log a dev warning about the unknown DOM attribute `code`. That's expected and harmless — Enamad's verification script reads it from the rendered DOM. The spread-cast pattern above keeps TypeScript happy.
 
 ## Out of scope
 
-No styling, layout, or behavior changes beyond the markup needed for Enamad verification.
+No layout, color, or component changes. Type sizes/weights stay the same — Estedad's metrics are very close to Vazirmatn so no spacing tweaks needed.
+
+## Verification
+
+After implementation: open the site offline (DevTools → Network → "Offline") and confirm text still renders in Estedad with no failed font requests.
