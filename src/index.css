@@ -2,6 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Self-hosted Estedad — fully offline, no external font requests. */
+@font-face {
+  font-family: 'Estedad';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/estedad/Estedad-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Estedad';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/estedad/Estedad-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Estedad';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/estedad/Estedad-SemiBold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Estedad';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/estedad/Estedad-Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Estedad';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('/fonts/estedad/Estedad-ExtraBold.woff2') format('woff2');
+}
+
 /* ============================================================================
    گندمک شاپ — Design System
    Forest green primary + warm copper accent + cream background
@@ -95,7 +132,7 @@
   }
 
   html {
-    font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+    font-family: 'Estedad', system-ui, -apple-system, 'Segoe UI', sans-serif;
   }
 
   body {
