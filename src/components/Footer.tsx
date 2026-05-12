@@ -1,8 +1,11 @@
 import { Phone, MapPin, ShieldCheck, Truck, Sparkles, Mail, Send } from "lucide-react";
 import footerLogo from "@/assets/gandomak-logo-new.png";
-import enamadSeal from "@/assets/trust/enamad.jpg";
 import emallsSeal from "@/assets/trust/emalls.svg";
 import postIrSeal from "@/assets/trust/post-ir.png";
+
+const ENAMAD_LINK = "https://trustseal.enamad.ir/?id=720710&Code=wRYn3reyeBtj2jZJ2oZYzZfyeKkh6don";
+const ENAMAD_LOGO = "https://trustseal.enamad.ir/logo.aspx?id=720710&Code=wRYn3reyeBtj2jZJ2oZYzZfyeKkh6don";
+const ENAMAD_CODE = "wRYn3reyeBtj2jZJ2oZYzZfyeKkh6don";
 
 const pillClass =
   "h-20 w-20 rounded-xl bg-background border border-border flex items-center justify-center p-2 hover:shadow-elegant transition-smooth";
