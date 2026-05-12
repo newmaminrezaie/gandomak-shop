@@ -1,21 +1,41 @@
-# Remove order caching
+## Goal
 
-Strip the localStorage caching layer from the admin orders feature. The admin page will simply fetch live from `/api/orders` every time; if the network fails, it shows an error instead of a stale snapshot.
+Make the Enamad seal (popup + footer) open your unique trust page at id `720710` instead of a generic Enamad page.
+
+## Root cause
+
+Enamad's trust page validates incoming clicks against the seal markup it serves. Two things must match their official snippet exactly:
+
+1. The `<img>` must carry a literal `code="wRYn3reyeBtj2jZJ2oZYzZfyeKkh6don"` attribute (we currently use `data-enamad-code`, which Enamad ignores).
+2. The image must be loaded from `https://trustseal.enamad.ir/logo.aspx?id=...&Code=...` with `referrerpolicy="origin"` so Enamad's server records the referer and binds the click to your seal.
+
+When either is missing, clicking the seal lands on Enamad's generic "seal not verified / not found" page instead of your unique page.
 
 ## Changes
 
-**`src/lib/adminApi.ts`**
-- Remove `CACHE_KEY`, `readOrdersCache`, `writeOrdersCache`, and the `CacheShape` type.
-- Simplify `fetchOrders` to: call the endpoint, return `{ ok: true, orders, fetchedAt }` on success, or `{ ok: false, error }` on failure. No cache fallback.
-- Remove the `fromCache` field from `FetchResult`.
-- Keep `getAdminToken` / `setAdminToken` / `clearAdminToken` (token storage is unrelated).
-- Add a one-time cleanup line that deletes any pre-existing `gandomak_admin_orders_cache` key from `localStorage`, so users who already have the stale snapshot get it wiped on next load.
+### `src/components/EnamadPopup.tsx`
+- Replace `data-enamad-code={ENAMAD_CODE}` on the `<img>` with the literal attribute Enamad expects. In React/TSX this requires either `dangerouslySetInnerHTML` on the wrapping `<a>` or spreading an unknown prop:
+  ```tsx
+  <img
+    src={ENAMAD_LOGO}
+    alt=""
+    referrerPolicy="origin"
+    style={{ cursor: "pointer" }}
+    {...({ code: ENAMAD_CODE } as React.ImgHTMLAttributes<HTMLImageElement>)}
+    className="block h-24 w-24 sm:h-28 sm:w-28 object-cover"
+  />
+  ```
+- Keep `href={ENAMAD_LINK}`, `target="_blank"`, `rel="noreferrer"` removed in favor of `rel="noopener"` (we must NOT strip the referrer — Enamad needs it). Use `rel="noopener"` only.
 
-**`src/pages/AdminOrdersPage.tsx`**
-- Remove the "From Cache" badge and any UI/logic that branches on `fromCache`.
-- Keep the "Offline" indicator only as a plain network-error message.
+### `src/components/Footer.tsx`
+- Same `code` attribute fix on the footer `<img>`.
+- Remove the `onClick` handler that calls `window.open(...)` — `window.open` with a name strips the referrer in some browsers, which can also break verification. Let the `<a target="_blank">` handle it natively (this also matches Enamad's official snippet).
+- Use `rel="noopener"` (not `noreferrer`).
 
-## Files NOT touched
-- `src/components/MiniCart.tsx`, `src/components/Header.tsx`, `src/lib/cart.ts`, `src/App.tsx` — unrelated to order caching.
+### Note on the `code` attribute and React warning
 
-This will not affect the home page either way, but it removes the cache layer you asked to disable.
+React will log a dev warning about the unknown DOM attribute `code`. That's expected and harmless — Enamad's verification script reads it from the rendered DOM. The spread-cast pattern above keeps TypeScript happy.
+
+## Out of scope
+
+No styling, layout, or behavior changes beyond the markup needed for Enamad verification.
