@@ -275,14 +275,14 @@ export default function CartPage() {
                     ? "در حال ثبت…"
                     : method === "card"
                     ? "ثبت سفارش (کارت‌به‌کارت)"
-                    : "پرداخت با زیبال"}
+                    : "پرداخت با بانک ملت"}
                 </button>
 
                 <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground text-center">
                   <ShieldCheck className="h-3.5 w-3.5 text-accent shrink-0" />
                   {method === "card"
                     ? "ثبت سفارش پس از واریز و ارسال کد پیگیری"
-                    : "انتقال امن به درگاه پرداخت زیبال"}
+                    : "انتقال امن به درگاه پرداخت بانک ملت"}
                 </div>
               </form>
             </aside>
