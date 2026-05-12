@@ -69,9 +69,9 @@ export default function CategoryGrid({ onSelect }: Props) {
             />
             {t.category !== "ادویه" && <div className="absolute inset-0 gradient-tile-fade" />}
             <div className="absolute bottom-0 right-0 left-0 p-2 sm:p-3 text-right">
-              <span className="inline-block text-primary-foreground font-extrabold text-sm sm:text-base md:text-lg drop-shadow-md">
-                {t.label}
-              </span>
+            <span className="inline-block text-primary-foreground font-semibold text-sm sm:text-base md:text-lg drop-shadow-md">
+              {t.label}
+            </span>
               <div className="h-0.5 w-8 mt-1 rounded-full bg-accent" />
             </div>
           </button>
