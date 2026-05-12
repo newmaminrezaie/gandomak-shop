@@ -234,7 +234,7 @@ export default function CartPage() {
                       active={method === "zibal"}
                       onClick={() => setMethod("zibal")}
                       icon={<Wallet className="h-4 w-4" />}
-                      label="درگاه زیبال"
+                      label="درگاه بانک ملت"
                     />
                   </div>
                 </div>
