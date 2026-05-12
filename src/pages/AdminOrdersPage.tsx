@@ -322,7 +322,7 @@ export default function AdminOrdersPage() {
                           ) : (
                             <Banknote className="h-3.5 w-3.5" />
                           )}
-                          {o.payment_method === "card" ? "کارت‌به‌کارت" : "زیبال"}
+                          {o.payment_method === "card" ? "کارت‌به‌کارت" : "درگاه بانک ملت"}
                         </span>
                       </td>
                       <td className="px-3 py-2">
@@ -464,10 +464,10 @@ export default function AdminOrdersPage() {
                   <h3 className="font-bold text-primary text-xs uppercase tracking-wide">
                     پرداخت
                   </h3>
-                  <div className="flex justify-between">
+                    <div className="flex justify-between">
                     <span className="text-muted-foreground">روش</span>
                     <span>
-                      {selected.payment_method === "card" ? "کارت‌به‌کارت" : "درگاه زیبال"}
+                      {selected.payment_method === "card" ? "کارت‌به‌کارت" : "درگاه بانک ملت"}
                     </span>
                   </div>
                   {selected.track_id && (
