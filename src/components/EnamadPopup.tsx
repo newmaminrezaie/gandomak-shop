@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 
-const ENAMAD_LINK = "https://trustseal.enamad.ir/?id=720710&Code=wRYn3reyeBtj2jZJ2oZYzZfyeKkh6don";
-const ENAMAD_LOGO = "https://trustseal.enamad.ir/logo.aspx?id=720710&Code=wRYn3reyeBtj2jZJ2oZYzZfyeKkh6don";
-const ENAMAD_CODE = "wRYn3reyeBtj2jZJ2oZYzZfyeKkh6don";
+const ENAMAD_LINK = "https://trustseal.enamad.ir/?id=655583&Code=i679RnaSXE7EUpN1xFeht0NynDKCAwub";
+const ENAMAD_LOGO = "https://trustseal.enamad.ir/logo.aspx?id=655583&Code=i679RnaSXE7EUpN1xFeht0NynDKCAwub";
+const ENAMAD_CODE = "i679RnaSXE7EUpN1xFeht0NynDKCAwub";
 const STORAGE_KEY = "enamad-popup-dismissed";
 
 export default function EnamadPopup() {

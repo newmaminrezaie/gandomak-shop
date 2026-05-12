@@ -1,49 +1,24 @@
-## Goal
+## Plan
 
-Replace Vazirmatn (loaded from Google Fonts CDN) with **Estedad**, fully self-hosted so the site renders 100% offline with no third-party font requests.
+1. **Replace the active Enamad credentials**
+   - Update the Enamad URL constants in `EnamadPopup.tsx` from the current `id=720710` / `Code=wRYn...` to the official values from the snippet:
+     - `id=655583`
+     - `Code=i679RnaSXE7EUpN1xFeht0NynDKCAwub`
 
-## Why Estedad
+2. **Match the official placement behavior**
+   - Ensure the popup anchor uses:
+     - `href="https://trustseal.enamad.ir/?id=655583&Code=i679RnaSXE7EUpN1xFeht0NynDKCAwub"`
+     - `target="_blank"`
+     - `referrerPolicy="origin"`
+   - Ensure the image uses:
+     - `src="https://trustseal.enamad.ir/logo.aspx?id=655583&Code=i679RnaSXE7EUpN1xFeht0NynDKCAwub"`
+     - empty `alt`
+     - `style={{ cursor: "pointer" }}`
+     - `code="i679RnaSXE7EUpN1xFeht0NynDKCAwub"`
 
-Estedad is a modern, warm, premium-feeling Persian sans designed as an upgrade to Vazirmatn — better suited for a saffron / spice / gift shop's editorial tone. Free, open-source (SIL OFL), full Latin + Arabic/Persian glyphs, all weights.
+3. **Keep footer seal consistent**
+   - Apply the same official ID/code to the footer Enamad seal too, so all Enamad links in the app point to the same specific trust page.
 
-## Files to add
-
-Self-hosted woff2 files in `public/fonts/estedad/`:
-
-```
-public/fonts/estedad/
-  Estedad-Regular.woff2     (400)
-  Estedad-Medium.woff2      (500)
-  Estedad-SemiBold.woff2    (600)
-  Estedad-Bold.woff2        (700)
-  Estedad-ExtraBold.woff2   (800)
-```
-
-Sourced from the official Estedad GitHub release (`aminabbasi/Estedad-Font`) — fetched once at build time and committed into `public/`. After this, the browser never contacts Google or any external host for fonts.
-
-## Files to change
-
-### `index.html`
-- Remove `<link rel="preconnect" href="https://fonts.googleapis.com">`
-- Remove `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`
-- Remove the Vazirmatn `<link>` and its `<noscript>` fallback (lines ~27–42).
-- Add `<link rel="preload" as="font" type="font/woff2" href="/fonts/estedad/Estedad-Regular.woff2" crossorigin>` for the critical weight only.
-
-### `src/index.css`
-- Add `@font-face` declarations at the top for all 5 weights with `font-display: swap` and `unicode-range` covering Arabic + Latin.
-- Change body `font-family` from `'Vazirmatn', system-ui, ...` to `'Estedad', system-ui, -apple-system, 'Segoe UI', sans-serif`.
-
-### `tailwind.config.ts`
-- Update both font tokens:
-  ```ts
-  sans:    ["Estedad", "system-ui", "sans-serif"],
-  display: ["Estedad", "system-ui", "sans-serif"],
-  ```
-
-## Out of scope
-
-No layout, color, or component changes. Type sizes/weights stay the same — Estedad's metrics are very close to Vazirmatn so no spacing tweaks needed.
-
-## Verification
-
-After implementation: open the site offline (DevTools → Network → "Offline") and confirm text still renders in Estedad with no failed font requests.
+4. **Verify the exact output**
+   - Search the codebase after edits to confirm no old Enamad ID/code remains.
+   - Confirm both the popup and footer links resolve to the provided official URL.
