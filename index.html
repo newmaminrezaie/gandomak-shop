@@ -24,21 +24,8 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://gandomakshop.ir/logo.png" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Non-blocking font load: page paints in system fallback, swaps to Vazirmatn when ready. -->
-    <link
-      rel="preload"
-      as="style"
-      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap"
-      onload="this.onload=null;this.rel='stylesheet'"
-    />
-    <noscript>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap"
-      />
-    </noscript>
+    <!-- Self-hosted Estedad: preload the critical weight only; the rest load via @font-face. -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/estedad/Estedad-Regular.woff2" crossorigin />
   </head>
 
   <body>
