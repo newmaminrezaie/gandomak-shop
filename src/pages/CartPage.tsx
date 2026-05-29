@@ -19,7 +19,7 @@ type ShippingMethod = "post_cod";
 export default function CartPage() {
   const { detailed, totalPrice, totalCount, setQty, remove, clear } = useCart();
   const [submitting, setSubmitting] = useState(false);
-  const [method, setMethod] = useState<PaymentMethod>("card");
+  const [method, setMethod] = useState<PaymentMethod>("zibal");
   const [shipping, setShipping] = useState<ShippingMethod>("post_cod");
   const payable = totalPrice + PACKAGING_FEE;
   const [form, setForm] = useState({
