@@ -22,6 +22,7 @@ import {
   listOrders,
 } from "./db.js";
 import { notifyPaidOrder } from "./telegram.js";
+import { notifyPaidOrderRubika, notifyCardOrderRubika } from "./rubika.js";
 
 const PORT = process.env.PORT || 3001;
 const MERCHANT_ID = process.env.ZIBAL_MERCHANT_ID || "zibal"; // 'zibal' = sandbox
@@ -106,7 +107,7 @@ app.post("/api/order", async (req, res) => {
         return res.status(400).json({ error: "missing_card_ref" });
       }
       const refId = `C${Date.now().toString().slice(-6)}`;
-      insertOrder({
+      const cardOrder = {
         id: orderId,
         customer_name: customer.name,
         customer_phone: customer.phone,
@@ -126,7 +127,12 @@ app.post("/api/order", async (req, res) => {
         paid_at: paidAt ? String(paidAt).trim() : null,
         status: "awaiting_review",
         created_at: now,
-      });
+      };
+      insertOrder(cardOrder);
+      // Fire-and-forget Rubika notification for card-to-card orders
+      notifyCardOrderRubika(cardOrder).catch((e) =>
+        console.error("[rubika] notify failed:", e)
+      );
       return res.json({ ok: true, orderId, refId });
     }
 
@@ -219,9 +225,12 @@ app.get("/payment/callback", async (req, res) => {
         ref_number: refNumber,
         paid_at: new Date().toISOString(),
       });
-      // Fire-and-forget Telegram notification
+      // Fire-and-forget notifications
       notifyPaidOrder(updated).catch((e) =>
         console.error("[telegram] notify failed:", e)
+      );
+      notifyPaidOrderRubika(updated).catch((e) =>
+        console.error("[rubika] notify failed:", e)
       );
       return res.redirect(
         302,
