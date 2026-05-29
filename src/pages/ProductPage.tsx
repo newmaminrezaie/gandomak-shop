@@ -4,14 +4,19 @@ import { ChevronLeft, Phone, ShoppingCart, Check, Plus, Minus } from "lucide-rea
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-import { getProductBySlug, formatToman, PRODUCTS } from "@/data/products";
+import { formatToman } from "@/data/products";
+import { useProducts, getProductBySlugSync } from "@/lib/productsStore";
 import { useCart } from "@/lib/cart";
 import { Seo } from "@/lib/seo";
 import { toast } from "sonner";
 
 export default function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
-  const product = slug ? getProductBySlug(slug) : undefined;
+  const PRODUCTS = useProducts();
+  const product = useMemo(
+    () => (slug ? PRODUCTS.find((p) => p.slug === slug) ?? getProductBySlugSync(slug) : undefined),
+    [slug, PRODUCTS]
+  );
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const { add } = useCart();
@@ -20,7 +25,7 @@ export default function ProductPage() {
   const related = useMemo(() => {
     if (!product) return [];
     return PRODUCTS.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
-  }, [product]);
+  }, [product, PRODUCTS]);
 
   if (!product) {
     return (
