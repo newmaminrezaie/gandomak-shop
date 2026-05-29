@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import type { Product } from "@/data/products";
-import { PRODUCTS } from "@/data/products";
+import { useProducts } from "@/lib/productsStore";
 
 export type CartItem = { id: string; qty: number };
 
