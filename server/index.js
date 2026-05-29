@@ -22,6 +22,7 @@ import {
   listOrders,
 } from "./db.js";
 import { notifyPaidOrder } from "./telegram.js";
+import { notifyPaidOrderRubika, notifyCardOrderRubika } from "./rubika.js";
 
 const PORT = process.env.PORT || 3001;
 const MERCHANT_ID = process.env.ZIBAL_MERCHANT_ID || "zibal"; // 'zibal' = sandbox
