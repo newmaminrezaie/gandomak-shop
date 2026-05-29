@@ -13,6 +13,7 @@ const CartPage = lazy(() => import("./pages/CartPage.tsx"));
 const PaymentCallback = lazy(() => import("./pages/PaymentCallback.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const AdminOrdersPage = lazy(() => import("./pages/AdminOrdersPage.tsx"));
+const AdminProductsPage = lazy(() => import("./pages/AdminProductsPage.tsx"));
 
 const FloatingCallButton = lazy(() => import("./components/FloatingCallButton.tsx"));
 const EnamadPopup = lazy(() => import("./components/EnamadPopup.tsx"));
@@ -76,6 +77,7 @@ const App = () => (
             <Route path="/payment/success" element={<PaymentCallback />} />
             <Route path="/payment/failed" element={<PaymentCallback />} />
             <Route path="/admin/orders" element={<AdminOrdersPage />} />
+            <Route path="/admin/products" element={<AdminProductsPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
