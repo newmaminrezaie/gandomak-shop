@@ -4,20 +4,21 @@ import Footer from "@/components/Footer";
 import CategoryGrid from "@/components/CategoryGrid";
 import CategoryChips from "@/components/CategoryChips";
 import ProductCard from "@/components/ProductCard";
-import { PRODUCTS } from "@/data/products";
+import { useProducts } from "@/lib/productsStore";
 import { Seo } from "@/lib/seo";
 
 const Index = () => {
   const [cat, setCat] = useState<string>("همه");
+  const PRODUCTS = useProducts();
 
   const filtered = useMemo(() => {
     if (cat === "همه") return PRODUCTS;
     return PRODUCTS.filter((p) => p.category === cat);
-  }, [cat]);
+  }, [cat, PRODUCTS]);
 
   const popular = useMemo(
     () => PRODUCTS.filter((p) => p.badge === "پرفروش" || p.category === "پرطرفدار").slice(0, 6),
-    []
+    [PRODUCTS]
   );
 
   return (
