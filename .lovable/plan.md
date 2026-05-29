@@ -1,53 +1,75 @@
-# Add Rubika notifications for paid orders
+# Internal Product CMS Plan
 
-Send an instant message to the Rubika bot **@Gandomakshopbot** whenever an order becomes "paid" — both Zibal gateway payments and card-to-card payments (currently `awaiting_review`). This runs in parallel with the existing Telegram notifier; neither replaces the other.
+Goal: a tiny admin at `gandomakshop.ir/admin/products` to add/edit/delete products and manage their images. Changes appear instantly on the live shop without `npm run build`. Works 100% offline on the VPS. Reuses the existing admin token from `/admin/orders`.
 
-## What we need from you
+## How it works (high level)
 
-The bot token alone is not enough — Rubika needs a **chat_id** (the recipient). Please:
+- Products move from the static `src/data/products.ts` file into the existing SQLite database (`server/orders.db`).
+- The React frontend stops importing `PRODUCTS` and instead fetches `GET /api/products` at runtime.
+- The admin UI (`/admin/products`) calls protected endpoints `POST/PUT/DELETE /api/admin/products` using the same `x-admin-token` header as the orders admin.
+- Images are uploaded as files to `server/uploads/` and served by the API at `/uploads/<file>`. No external services, no internet needed.
+- The backend price mirror (`server/products.mirror.js`) is replaced by a DB read so the server still recomputes order totals from trusted prices.
 
-1. Open Rubika, search for **@Gandomakshopbot**, and send it any message (e.g. `/start`).
-2. We'll add a small one-time script (`server/rubika-getchat.js`) you run on the VPS to read incoming updates and print the chat_id.
-3. Paste that chat_id into `server/.env` as `RUBIKA_CHAT_ID`.
+## Backend changes (`server/`)
 
-If you already know the chat_id (group or personal), share it and we skip step 2.
+1. New table `products` (created on startup, alongside `orders`):
+   - `id TEXT PRIMARY KEY` (e.g. `p-501`, auto-generated if missing)
+   - `slug TEXT UNIQUE NOT NULL`
+   - `name`, `category`, `weight`, `short_description`, `description` (TEXT)
+   - `price INTEGER NOT NULL` (Toman), `old_price INTEGER`
+   - `badge TEXT`, `in_stock INTEGER DEFAULT 1`
+   - `highlights TEXT` (JSON array of strings)
+   - `images TEXT NOT NULL` (JSON array of paths; index 0 = cover)
+   - `sort_order INTEGER`, `created_at`, `updated_at`
+2. One-time seed: on first boot, if `products` is empty, import every entry from a snapshot of `src/data/products.ts` so the live catalog is preserved.
+3. Public endpoints (no auth):
+   - `GET /api/products` → array of products (frontend catalog).
+   - `GET /api/products/:slug` → single product.
+4. Admin endpoints (require `x-admin-token`, same env var as orders):
+   - `POST   /api/admin/products` — create
+   - `PUT    /api/admin/products/:id` — update any field
+   - `DELETE /api/admin/products/:id` — delete
+   - `POST   /api/admin/products/:id/images` — multipart upload (one or many files), appends to `images[]`
+   - `DELETE /api/admin/products/:id/images` — remove an image by path or index
+   - `PUT    /api/admin/products/:id/images/reorder` — reorder `images[]` (first = cover)
+5. Image storage: `server/uploads/products/<id>/<uuid>.<ext>`. Static-served at `/uploads/...`. Accept jpg/png/webp, ≤5 MB, basic mime check. Use `multer` (added to `server/package.json`).
+6. Price-trust update: order-creation path reads prices from the `products` table (not `products.mirror.js`), so deleting that file becomes safe. Totals are still computed server-side.
 
-## Changes
+## Frontend changes (`src/`)
 
-### 1. `server/rubika.js` (new)
-Mirror of `server/telegram.js`. Exports `notifyPaidOrderRubika(order)`. Reads `RUBIKA_BOT_TOKEN` and `RUBIKA_CHAT_ID` from env; no-op if missing. Posts to:
-```
-POST https://botapi.rubika.ir/v3/{RUBIKA_BOT_TOKEN}/sendMessage
-body: { chat_id, text }
-```
-Same Persian message format as Telegram (customer, phone, address, items, totals, shipping, payment method, ref number). Rubika's `sendMessage` does not support HTML — plain text only, no `<b>`/`<code>` tags.
+1. `src/lib/productsApi.ts` (new): `fetchProducts()`, `fetchProductBySlug()` against `/api/products`. Plus admin functions (create/update/delete/upload/reorder/removeImage) that send `x-admin-token` from `localStorage` (same key used by orders admin).
+2. Replace direct imports of `PRODUCTS` in `Index`, `ProductPage`, `CartPage`, `CategoryGrid`, etc., with a small `useProducts()` hook that fetches once and caches in memory + sessionStorage (so navigation is instant; offline-safe on the VPS LAN).
+3. `src/data/products.ts` becomes a type-only file (keeps `Product`, `CATEGORIES`, `formatToman`, `getProductBySlug`-from-list helper). The `PRODUCTS` constant is removed.
+4. New page `src/pages/AdminProductsPage.tsx` mounted at `/admin/products`:
+   - Token gate identical to `AdminOrdersPage` (reuses `getAdminToken`/`setAdminToken`).
+   - Table of products with inline edit + a side panel/dialog for the full form (name, slug, category dropdown from `CATEGORIES`, weight, price, oldPrice, badge, inStock toggle, short/long description, highlights as a chip list).
+   - Image manager: drag-and-drop / file picker upload, thumbnails grid, drag-to-reorder (first thumbnail labeled "کاور"), delete button per image.
+   - "افزودن محصول" button → empty form.
+   - Persian RTL UI consistent with the rest of the site.
+5. Route added in `src/App.tsx`: `<Route path="/admin/products" element={<AdminProductsPage />} />`.
 
-### 2. `server/rubika-getchat.js` (new, one-time helper)
-Calls `getUpdates` and prints `chat_id` of any incoming message. Run once after messaging the bot.
+## Why no rebuild is needed
 
-### 3. `server/index.js` (edit)
-- Import `notifyPaidOrderRubika` from `./rubika.js`.
-- **Zibal branch** (`/payment/callback`, after successful verify): fire alongside `notifyPaidOrder` (Telegram).
-- **Card-to-card branch** (`/api/order` with `paymentMethod === "card"`): currently no Telegram notification is sent — add Rubika notification immediately on submit (status `awaiting_review`), and optionally Telegram too if you want symmetry. Confirm in next message.
+Once the catalog is served from SQLite via `/api/products`, the React bundle is unchanged when you add/edit a product. The browser just fetches the new list on next load. Uploaded images live on disk under `server/uploads/` and are served directly by the API. No build step, no redeploy.
 
-### 4. `server/.env.example` (edit)
-Add:
-```
-RUBIKA_BOT_TOKEN=BGAAAC0IZRGLZKQZIFPKRSOIWQPUKDHPMTXXFGDNNPUDNMTPHXSVGGRPOGZRDRLK
-RUBIKA_CHAT_ID=
-```
-Reminder: real values go only in `server/.env` on the VPS, not committed.
+## Offline guarantee
+
+- SQLite + local file uploads — no external service calls.
+- No CDN dependency for product images (they're served from the same VPS).
+- The admin page itself is part of the same bundle and works on LAN.
+
+## You can also add products by chatting with me
+
+After this is built, you can say "add product X, price Y, image: <upload>" and I will call the same admin API (or write a one-off script) to insert it — no code edit, no rebuild.
 
 ## Out of scope
 
-- No frontend changes.
-- No webhook / two-way bot (notifications are outbound only — same as current Telegram setup).
-- No changes to Zibal, DB schema, or order flow.
+- No changes to checkout, Zibal, card-to-card, Telegram/Rubika notifications, or order flow.
+- No multi-user admin, no role system (single shared token, same as orders admin).
+- No image resizing/CDN (can be added later if needed).
 
-## Open question
+## VPS migration steps (after implementation)
 
-For **card-to-card** orders (status `awaiting_review`, paid off-platform, you verify manually) — do you want the Rubika alert:
-- (a) immediately when the customer submits the order with their card ref, or
-- (b) only after you mark it `paid` in the admin panel?
-
-Today there's no admin "mark as paid" action, so (a) is the practical choice unless you also want me to add that admin action.
+1. Pull code, `cd server && npm install` (adds `multer`).
+2. Restart API (`pm2 restart gandomak-api`). On first boot the `products` table is created and seeded from the current catalog.
+3. Visit `/admin/products`, enter the existing admin token, manage products freely.
