@@ -22,6 +22,7 @@ function write(items: CartItem[]) {
 }
 
 export function useCart() {
+  const products = useProducts();
   const [items, setItems] = useState<CartItem[]>(() => read());
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export function useCart() {
 
   const detailed = items
     .map((i) => {
-      const product = PRODUCTS.find((p) => p.id === i.id);
+      const product = products.find((p) => p.id === i.id);
       return product ? { product, qty: i.qty } : null;
     })
     .filter(Boolean) as { product: Product; qty: number }[];
