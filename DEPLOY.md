@@ -83,6 +83,14 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 10m;   # برای آپلود تصاویر محصولات
+    }
+
+    # پراکسی تصاویر آپلودشدهٔ محصولات (پنل ادمین)
+    location /uploads/ {
+        proxy_pass http://127.0.0.1:8787;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
     }
 
     # کش طولانی برای استاتیک‌ها (تصاویر، فونت، JS، CSS)
@@ -124,15 +132,16 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ---
 
-## ۵) مدیریت محصولات
+## ۵) مدیریت محصولات (پنل ادمین — بدون نیاز به build)
 
-تمام محصولات در `src/data/products.ts`. برای افزودن/ویرایش، فقط همان فایل را ویرایش کنید، سپس:
+از این پس می‌توانید محصولات را به‌صورت زنده از پنل ادمین مدیریت کنید:
 
-```bash
-npm run build
-```
-
-و محتوای `dist/client/` را روی VPS جایگزین کنید. اگر قیمت تغییر کرد، **حتماً** `server/products.mirror.js` را هم به‌روزرسانی کنید (بک‌اند جمع را خودش از این فایل محاسبه می‌کند، نه از سبد کلاینت).
+- آدرس: `https://gandomakshop.ir/admin/products`
+- توکن ورود: همان `ADMIN_TOKEN` که برای `/admin/orders` استفاده می‌شود.
+- امکانات: افزودن/ویرایش/حذف محصول، آپلود چند تصویر، تغییر ترتیب تصاویر (اولین تصویر = کاور)، حذف تصویر.
+- تغییرات **فوری** روی فروشگاه اعمال می‌شود (بدون نیاز به `npm run build`).
+- تصاویر آپلودشده در `server/uploads/products/<id>/` ذخیره می‌شوند و از طریق `/uploads/...` در دسترس‌اند.
+- در اولین اجرای بک‌اند، اگر جدول `products` خالی باشد به‌صورت خودکار از فهرست `src/data/products.ts` پر می‌شود.
 
 ---
 

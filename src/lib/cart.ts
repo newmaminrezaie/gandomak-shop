@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import type { Product } from "@/data/products";
-import { PRODUCTS } from "@/data/products";
+import { useProducts } from "@/lib/productsStore";
 
 export type CartItem = { id: string; qty: number };
 
@@ -22,6 +22,7 @@ function write(items: CartItem[]) {
 }
 
 export function useCart() {
+  const products = useProducts();
   const [items, setItems] = useState<CartItem[]>(() => read());
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export function useCart() {
 
   const detailed = items
     .map((i) => {
-      const product = PRODUCTS.find((p) => p.id === i.id);
+      const product = products.find((p) => p.id === i.id);
       return product ? { product, qty: i.qty } : null;
     })
     .filter(Boolean) as { product: Product; qty: number }[];
