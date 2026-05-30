@@ -127,6 +127,11 @@ app.get("/api/products/:slug", (req, res) => {
   res.json(p);
 });
 
+// ── Torob API v3 (https://panel.torob.com/s/torobApiV3) ─────────────────────
+app.post("/torob_api/v3/products", torobHandler);
+
+
+
 // ── Admin product endpoints ─────────────────────────────────────────────────
 app.get("/api/admin/products", requireAdmin, (_req, res) => {
   res.json(listProducts());
