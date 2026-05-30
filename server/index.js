@@ -38,6 +38,7 @@ import {
 } from "./productsDb.js";
 import { notifyPaidOrder } from "./telegram.js";
 import { notifyPaidOrderRubika, notifyCardOrderRubika } from "./rubika.js";
+import { torobHandler } from "./torob.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -125,6 +126,11 @@ app.get("/api/products/:slug", (req, res) => {
   if (!p) return res.status(404).json({ error: "not_found" });
   res.json(p);
 });
+
+// ── Torob API v3 (https://panel.torob.com/s/torobApiV3) ─────────────────────
+app.post("/torob_api/v3/products", torobHandler);
+
+
 
 // ── Admin product endpoints ─────────────────────────────────────────────────
 app.get("/api/admin/products", requireAdmin, (_req, res) => {
