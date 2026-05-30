@@ -146,6 +146,54 @@ app.get("/api/products/:slug", (req, res) => {
 // ── Torob API v3 (https://panel.torob.com/s/torobApiV3) ─────────────────────
 app.post("/torob_api/v3/products", torobHandler);
 
+// ── Blog posts (public) ─────────────────────────────────────────────────────
+app.get("/api/posts", (_req, res) => {
+  res.json(listPosts({ publishedOnly: true }));
+});
+app.get("/api/posts/:slug", (req, res) => {
+  const p = getPostBySlug(req.params.slug);
+  if (!p || p.status !== "published") return res.status(404).json({ error: "not_found" });
+  res.json(p);
+});
+
+// ── Blog posts (admin) ──────────────────────────────────────────────────────
+app.get("/api/admin/posts", requireAdmin, (_req, res) => {
+  res.json(listPosts());
+});
+app.post("/api/admin/posts", requireAdmin, (req, res) => {
+  try { res.json(createPost(req.body || {})); }
+  catch (e) { res.status(400).json({ error: e.message }); }
+});
+app.put("/api/admin/posts/:id", requireAdmin, (req, res) => {
+  try { res.json(updatePost(req.params.id, req.body || {})); }
+  catch (e) {
+    const code = e.message === "not_found" ? 404 : 400;
+    res.status(code).json({ error: e.message });
+  }
+});
+app.delete("/api/admin/posts/:id", requireAdmin, (req, res) => {
+  const ok = deletePost(req.params.id);
+  if (!ok) return res.status(404).json({ error: "not_found" });
+  res.json({ ok: true });
+});
+app.post(
+  "/api/admin/posts/:id/cover",
+  requireAdmin,
+  (req, res, next) => {
+    if (!getPostById(req.params.id)) return res.status(404).json({ error: "not_found" });
+    next();
+  },
+  postUpload.single("file"),
+  (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "no_file" });
+      const rel = `/uploads/posts/${req.params.id}/${path.basename(req.file.path)}`;
+      res.json(setPostCover(req.params.id, rel));
+    } catch (e) {
+      res.status(400).json({ error: e.message });
+    }
+  }
+);
 
 
 // ── Admin product endpoints ─────────────────────────────────────────────────
