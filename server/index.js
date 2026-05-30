@@ -109,28 +109,6 @@ const postUpload = makeUpload("posts");
 
 fs.mkdirSync(path.join(UPLOADS_ROOT, "posts"), { recursive: true });
 
-// Legacy diskStorage object kept for backwards-compat block below (no-op)
-const _legacy_unused = multer({
-  storage: multer.diskStorage({
-    destination: (req, _file, cb) => {
-      const pid = String(req.params.id || "misc").replace(/[^a-z0-9_-]/gi, "");
-      const dir = path.join(UPLOADS_ROOT, "products", pid);
-      fs.mkdirSync(dir, { recursive: true });
-      cb(null, dir);
-    },
-    filename: (_req, file, cb) => {
-      const ext = (path.extname(file.originalname) || ".jpg").toLowerCase().slice(0, 5);
-      const safeExt = /^\.(jpg|jpeg|png|webp|gif)$/.test(ext) ? ext : ".jpg";
-      cb(null, `${Date.now()}-${crypto.randomBytes(4).toString("hex")}${safeExt}`);
-    },
-  }),
-  limits: { fileSize: 5 * 1024 * 1024, files: 10 },
-  fileFilter: (_req, file, cb) => {
-    if (!ALLOWED_MIME.has(file.mimetype)) return cb(new Error("unsupported_type"));
-    cb(null, true);
-  },
-});
-
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "200kb" }));
