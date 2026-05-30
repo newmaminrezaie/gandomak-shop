@@ -38,6 +38,7 @@ import {
 } from "./productsDb.js";
 import { notifyPaidOrder } from "./telegram.js";
 import { notifyPaidOrderRubika, notifyCardOrderRubika } from "./rubika.js";
+import { torobHandler } from "./torob.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
